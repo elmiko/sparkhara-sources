@@ -10,7 +10,7 @@ if __name__ == '__main__':
     sc = SparkContext(appName='SparkharaLogCounter')
     ssc = StreamingContext(sc, 1)
 
-    lines = ssc.socketTextStream('0.0.0.0', 9900)
+    lines = ssc.socketTextStream('0.0.0.0', 9901)
     lines.foreachRDD(rdd_print)
     ssc.start()
     ssc.awaitTermination()
