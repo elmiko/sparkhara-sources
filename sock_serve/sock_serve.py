@@ -1,4 +1,5 @@
 import socket
+import time
 
 def accept_9900():
     sock = socket.socket()
@@ -21,7 +22,13 @@ def main():
     print('connection from: {}'.format(recv_addr))
     try:
         while True:
-            send.send(recv.recv(1024))
+            r = recv.recv(4096)
+            print('received {} bytes'.format(len(r)))
+            if len(r) != 0:
+                s = send.send(r)
+                print('sent {} bytes'.format(s))
+            else:
+                time.sleep(1)
     finally:
         recv.close()
         send.close()
