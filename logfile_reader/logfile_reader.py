@@ -23,7 +23,7 @@ def main():
             l = f.readline()
             pos2 = f.tell()
             if pos1 != pos2:
-                sock.sendall(l+'\n')
+                sock.sendall(l)
                 print('sent: {}'.format(l))
             else:
                 time.sleep(1)
