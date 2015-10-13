@@ -15,7 +15,8 @@ body {
 }
 
 .x.axis path {
-  display: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
 }
 
 .line {
@@ -31,12 +32,10 @@ body {
 
 var margin = {top: 20, right: 20, bottom: 30, left: 50},
     width = 960 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
-
-var parseDate = d3.time.format("%d-%b-%y").parse;
+    height = 300 - margin.top - margin.bottom;
 
 var x = d3.scale.linear()
-    .domain([0, 9])
+    .domain([0, 60])
     .range([0, width]);
 
 var y = d3.scale.linear()
@@ -62,27 +61,30 @@ var svg = d3.select("body").append("svg")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var total_count = 0;
-var count_list = [0,0,0,0,0,0,0,0,0,0];
+var count_list = [];
 
 function get_count() {
   var data = [];
 
-  for(var i = 0; i < count_list.length; i++) {
-    var p = Object();
-    p.pos = i;
-    p.count = +count_list[i];
-    data.push(p);
-  }
+  count_list.forEach(function (item, idx, arr) {
+      var p = Object();
+      p.pos = idx;
+      p.count = +item;
+      data.push(p);
+  });
+
   return data;
 }
 
 function initialize() {
-  var data = get_count();
-
   svg.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
+      .call(xAxis)
+    .append("text")
+      .attr("y", 6)
+      .attr("dy", "2.25em")
+      .text("seconds");
 
   svg.append("g")
       .attr("class", "y axis")
@@ -92,14 +94,10 @@ function initialize() {
       .attr("y", 6)
       .attr("dy", ".71em")
       .style("text-anchor", "end")
-      .text("count");
+      .text("logs lines");
 
   svg.append("g")
-      .attr("id", "countline")
-      .append("path")
-      .datum(data)
-      .attr("class", "line")
-      .attr("d", line);
+      .attr("id", "countline");
 }
 
 function update() {
@@ -121,7 +119,9 @@ setInterval(function() {
       total_count = data.totals.all;
 
       count_list.unshift(total_count - old_total_count);
-      count_list.pop();
+      if (count_list.length >= 60) {
+        count_list.pop();
+      }
 
       update();
   });

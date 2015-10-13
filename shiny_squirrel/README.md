@@ -1,10 +1,10 @@
-# log shiny
+# shiny squirrel
 
 this is a flask application for displaying some log data
 
 to run this application simply install the requirements and run:
 
-    $ python log_shiny_app.py
+    $ python shiny_squirrel.py
 
 ## api
 
