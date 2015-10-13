@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+</style>
+</head><body>
+<script src="/static/d3.js"></script>
+<script>
+
+var margin = {top: 20, right: 20, bottom: 30, left: 50},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var parseDate = d3.time.format("%d-%b-%y").parse;
+
+var x = d3.scale.linear()
+    .domain([0, 9])
+    .range([0, width]);
+
+var y = d3.scale.linear()
+    .domain([0, 100])
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left");
+
+var line = d3.svg.line()
+    .x(function(d) { return x(d.pos); })
+    .y(function(d) { return y(d.count); });
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var total_count = 0;
+var count_list = [0,0,0,0,0,0,0,0,0,0];
+
+function get_count() {
+  var data = [];
+
+  for(var i = 0; i < count_list.length; i++) {
+    var p = Object();
+    p.pos = i;
+    p.count = +count_list[i];
+    data.push(p);
+  }
+  return data;
+}
+
+function initialize() {
+  var data = get_count();
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("count");
+
+  svg.append("g")
+      .attr("id", "countline")
+      .append("path")
+      .datum(data)
+      .attr("class", "line")
+      .attr("d", line);
+}
+
+function update() {
+  var data = get_count();
+  d3.select("#countline").selectAll("path").remove();
+  d3.select("#countline").append("path")
+        .datum(data)
+        .attr("class", "line")
+        .attr("d", line);
+}
+
+initialize();
+
+setInterval(function() {
+  d3.json("/totals", function(error, data) {
+      if (error) throw error;
+
+      var old_total_count = total_count;
+      total_count = data.totals.all;
+
+      count_list.unshift(total_count - old_total_count);
+      count_list.pop();
+
+      update();
+  });
+}, 1500);
+
+</script>
+</body></html>
