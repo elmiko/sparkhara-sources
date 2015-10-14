@@ -25,6 +25,16 @@ body {
   stroke-width: 1.5px;
 }
 
+.circle {
+  fill: steelblue;
+  stroke: none;
+  stroke-width: 2px;
+}
+
+.circle:hover {
+  stroke: lightblue;
+}
+
 </style>
 </head><body>
 <script src="/static/d3.js"></script>
@@ -62,6 +72,12 @@ var svg = d3.select("body").append("svg")
 
 var total_count = 0;
 var count_list = [];
+
+function circle_transform(item) {
+  var scaled_pos = x(item.pos);
+  var scaled_cnt = y(item.count);
+  return "translate(" + scaled_pos + "," + scaled_cnt + ")";
+}
 
 function get_count() {
   var data = [];
@@ -107,6 +123,12 @@ function update() {
         .datum(data)
         .attr("class", "line")
         .attr("d", line);
+  data.forEach(function (item) {
+    d3.select("#countline").append("path")
+          .attr("transform", circle_transform(item))
+          .attr("class", "circle")
+          .attr("d", d3.svg.symbol().size(40));
+  });
 }
 
 initialize();
