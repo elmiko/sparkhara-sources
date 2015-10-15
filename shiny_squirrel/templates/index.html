@@ -162,8 +162,8 @@ setInterval(function() {
       if (error) throw error;
 
       var p = Object();
-      p.count = data['count-packets'].last.count;
-      p.packet_id = data['count-packets'].last.id;
+      p.count = data["count-packets"]["last-received"].count;
+      p.packet_id = data["count-packets"]["last-received"].id;
 
       count_list.unshift(p);
       if (count_list.length >= 60) {

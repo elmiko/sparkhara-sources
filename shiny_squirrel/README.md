@@ -36,22 +36,58 @@ a web page with the graph of counts
       }
     }
 
+### log count packets
+
 **Request**
 
-    POST /totals
-
-    {
-      "totals": {
-        "all": 100
-      }
-    }
+    GET /count-packets
 
 **Response**
 
     200
 
     {
-      "totals": {
-        "all": 100
+      "count-packets": {
+        "last-received": {
+          "count": 0,
+          "id": null
+        }
+      }
+    }
+
+**Request**
+
+    POST /count-packets
+
+    {
+      "id": null,
+      "count": 0
+    }
+
+**Response**
+
+    201
+
+    {
+      "count-packets": {
+        "last-received": {
+          "count": 0,
+          "id": null
+        }
+      }
+    }
+
+**Request**
+
+    GET /count-packets/{packet_id}
+
+**Response**
+
+    200
+
+    {
+      "count-packet": {
+        "id": null,
+        "logs": []
       }
     }
