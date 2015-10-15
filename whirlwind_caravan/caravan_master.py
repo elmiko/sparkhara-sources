@@ -1,32 +1,37 @@
-import threading
 import time
+import uuid
 
+import pymongo
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
 import requests
 
 
-def total_emitter(acc):
-    time.sleep(2)
-    while True:
-        data = {'totals': {'all': acc.value}}
-        requests.post('http://10.0.1.107:9050/totals', json=data)
-        time.sleep(0.5)
+def signal_rest_server(rawdata):
+    data = {'id': rawdata['_id'],
+            'count': rawdata['count'],
+            }
+    requests.post('http://10.0.1.107:9050/count-packets', json=data)
+
+
+def store_log_packets(rdd):
+    log_lines = rdd.collect()
+    data = {'_id': None if len(log_lines) == 0 else uuid.uuid4().hex,
+            'count': len(log_lines),
+            'logs': log_lines,
+            }
+    if len(log_lines) != 0:
+        db = pymongo.MongoClient('10.0.1.107').sparkhara.count_packets
+        db.insert_one(data)
+    signal_rest_server(data)
+
 
 if __name__ == '__main__':
     sc = SparkContext(appName='SparkharaLogCounter')
     ssc = StreamingContext(sc, 1)
 
-    total_lines = sc.accumulator(0)
-
-    def rdd_process(rdd):
-        a = rdd.collect()
-        total_lines.add(len(a))
-
     lines = ssc.socketTextStream('0.0.0.0', 9901)
-    lines.foreachRDD(rdd_process)
+    lines.foreachRDD(store_log_packets)
 
-    th = threading.Thread(target=total_emitter, args=(total_lines,))
-    th.start()
     ssc.start()
     ssc.awaitTermination()

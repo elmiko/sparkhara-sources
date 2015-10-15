@@ -37,6 +37,10 @@ body {
 
 </style>
 </head><body>
+
+<div id="graph"></div>
+<div id="packets"></div>
+
 <script src="/static/d3.js"></script>
 <script>
 
@@ -45,11 +49,11 @@ var margin = {top: 20, right: 20, bottom: 30, left: 50},
     height = 270 - margin.top - margin.bottom;
 
 var x = d3.scale.linear()
-    .domain([0, 60])
+    .domain([0, 90])
     .range([0, width]);
 
 var y = d3.scale.linear()
-    .domain([0, 100])
+    .domain([0, 11])
     .range([height, 0]);
 
 var xAxis = d3.svg.axis()
@@ -64,13 +68,12 @@ var line = d3.svg.line()
     .x(function(d) { return x(d.pos); })
     .y(function(d) { return y(d.count); });
 
-var svg = d3.select("body").append("svg")
+var svg = d3.select("#graph").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-var total_count = 0;
 var count_list = [];
 
 function circle_transform(item) {
@@ -85,11 +88,30 @@ function get_count() {
   count_list.forEach(function (item, idx, arr) {
       var p = Object();
       p.pos = idx;
-      p.count = +item;
+      p.count = +item.count;
+      p.packet_id = item.packet_id;
       data.push(p);
   });
 
   return data;
+}
+
+function packet_click(packet) {
+  if (packet.packet_id == null) {
+    return;
+  }
+
+  d3.json("/count-packets/" + packet.packet_id, function(error, data) {
+      if (error) throw error;
+
+      var countline = d3.select("#packets");
+      countline.selectAll('p').remove();
+      data['count-packet'].logs.forEach(function (item) {
+          countline.append('p')
+              .attr("class", "packet-log-line")
+              .text(item);
+      });
+  });
 }
 
 function initialize() {
@@ -125,22 +147,25 @@ function update() {
         .attr("d", line);
   data.forEach(function (item) {
     d3.select("#countline").append("path")
+          .datum(item)
           .attr("transform", circle_transform(item))
           .attr("class", "circle")
-          .attr("d", d3.svg.symbol().size(40));
+          .attr("d", d3.svg.symbol().size(40))
+          .on("click", packet_click);
   });
 }
 
 initialize();
 
 setInterval(function() {
-  d3.json("/totals", function(error, data) {
+  d3.json("/count-packets", function(error, data) {
       if (error) throw error;
 
-      var old_total_count = total_count;
-      total_count = data.totals.all;
+      var p = Object();
+      p.count = data['count-packets'].last.count;
+      p.packet_id = data['count-packets'].last.id;
 
-      count_list.unshift(total_count - old_total_count);
+      count_list.unshift(p);
       if (count_list.length >= 60) {
         count_list.pop();
       }
