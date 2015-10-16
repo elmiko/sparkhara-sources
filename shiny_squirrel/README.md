@@ -74,6 +74,10 @@ a web page with the graph of counts
           "count": 0,
           "id": null
         }
+        "since-last-get": {
+          "count": 0,
+          "ids": []
+        }
       }
     }
 

@@ -1,3 +1,5 @@
+import copy
+
 import flask as f
 import pymongo
 
@@ -61,17 +63,31 @@ class LogTotals(object):
 
 class CountPackets(object):
     def __init__(self):
+        self.flush()
         self.last_packet = {
             'id': None,
             'count': 0
             }
 
+    def flush(self):
+        self.since_last_get = {
+            'ids': [],
+            'count': 0
+            }
+
     def to_dict(self):
-        return { 'count-packets': {'last-received': self.last_packet}}
+        return {
+            'count-packets': {
+                'last-received': copy.deepcopy(self.last_packet),
+                'since-last-get': copy.deepcopy(self.since_last_get)
+                }
+            }
 
     def update_from_dict(self, new_packet):
         self.last_packet['id'] = new_packet.get('id')
         self.last_packet['count'] = int(new_packet.get('count', 0))
+        self.since_last_get['count'] += new_packet.get('count', 0)
+        self.since_last_get['ids'].append(new_packet.get('id'))
 
 
 @app.route('/')
@@ -94,7 +110,10 @@ def count_packets():
         countpackets().update_from_dict(data)
         logtotals().add(LOG_ALL, data.get('count'))
         status = 201
-    return f.jsonify(countpackets().to_dict()), status
+    ret = f.jsonify(countpackets().to_dict())
+    if f.request.method == 'GET':
+        countpackets().flush()
+    return ret, status
 
 
 @app.route('/count-packets/<packet_id>', methods=['GET'])
