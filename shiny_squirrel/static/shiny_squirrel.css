@@ -1,0 +1,47 @@
+body {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.bar {
+  fill: steelblue;
+  stroke: none;
+}
+
+.bar-errors {
+  fill: red;
+  stroke: none;
+}
+
+.bar:hover {
+  fill: lightblue;
+  stroke: steelblue;
+  stroke-width: 1px;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.circle {
+  fill: steelblue;
+  stroke: none;
+  stroke-width: 2px;
+}
+
+.circle:hover {
+  stroke: lightblue;
+}

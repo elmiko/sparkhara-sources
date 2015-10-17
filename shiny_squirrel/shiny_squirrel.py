@@ -6,16 +6,16 @@ import pymongo
 
 app = f.Flask(__name__)
 
-_logtotals=None
-_countpackets=None
+_logtotals = None
+_countpackets = None
 
-LOG_ALL='all'
+LOG_ALL = 'all'
 
 
 def logtotals():
     global _logtotals
     if _logtotals is None:
-       _logtotals = LogTotals()
+        _logtotals = LogTotals()
     return _logtotals
 
 
@@ -72,7 +72,8 @@ class CountPackets(object):
     def flush(self):
         self.since_last_get = {
             'ids': [],
-            'count': 0
+            'count': 0,
+            'errors': False,
             }
 
     def to_dict(self):
@@ -87,7 +88,10 @@ class CountPackets(object):
         self.last_packet['id'] = new_packet.get('id')
         self.last_packet['count'] = int(new_packet.get('count', 0))
         self.since_last_get['count'] += new_packet.get('count', 0)
-        self.since_last_get['ids'].append(new_packet.get('id'))
+        if new_packet.get('id') is not None:
+            self.since_last_get['ids'].append(new_packet.get('id'))
+        if new_packet.get('errors') is True:
+            self.since_last_get['errors'] = True
 
 
 @app.route('/')

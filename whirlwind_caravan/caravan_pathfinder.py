@@ -23,14 +23,6 @@ def get_client():
     return zaqarclient.Client(ZAQAR_URL, ZAQAR_VERSION, conf=conf)
 
 
-def accept_9900():
-    sock = socket.socket()
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(('0.0.0.0', 9900))
-    sock.listen(1)
-    return sock.accept()
-
-
 def accept_9901():
     sock = socket.socket()
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
