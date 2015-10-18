@@ -87,7 +87,7 @@ class CountPackets(object):
     def update_from_dict(self, new_packet):
         self.last_packet['id'] = new_packet.get('id')
         self.last_packet['count'] = int(new_packet.get('count', 0))
-        self.since_last_get['count'] += new_packet.get('count', 0)
+        self.since_last_get['count'] += int(new_packet.get('count', 0))
         if new_packet.get('id') is not None:
             self.since_last_get['ids'].append(new_packet.get('id'))
         if new_packet.get('errors') is True:
@@ -106,7 +106,6 @@ def totals():
 
 @app.route('/count-packets', methods=['GET', 'POST'])
 def count_packets():
-    status = 200
     if f.request.method == 'POST':
         data = f.request.get_json()
         if not data:
@@ -114,8 +113,10 @@ def count_packets():
         countpackets().update_from_dict(data)
         logtotals().add(LOG_ALL, data.get('count'))
         status = 201
-    ret = f.jsonify(countpackets().to_dict())
-    if f.request.method == 'GET':
+        ret = ''
+    else:
+        status = 200
+        ret = f.jsonify(countpackets().to_dict())
         countpackets().flush()
     return ret, status
 
