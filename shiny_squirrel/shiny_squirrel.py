@@ -141,10 +141,13 @@ def sorted_logs():
     def log_sort(a, b):
         print(a)
         print(b)
-        date1 = datetime.datetime.strptime(a.split('::')[0],
-                                           '%Y-%m-%d %H:%M:%S.%f')
-        date2 = datetime.datetime.strptime(b.split('::')[0],
-                                           '%Y-%m-%d %H:%M:%S.%f')
+        try:
+            date1 = datetime.datetime.strptime(a.split('::')[0],
+                                               '%Y-%m-%d %H:%M:%S.%f')
+            date2 = datetime.datetime.strptime(b.split('::')[0],
+                                               '%Y-%m-%d %H:%M:%S.%f')
+        except ValueError:
+            return 0
         return cmp(date1, date2)
 
     ret = {'sorted-logs': {'lines': sorted(logs, log_sort)}}

@@ -1,3 +1,4 @@
+import argparse
 import socket
 import time
 
@@ -23,20 +24,28 @@ def get_client():
     return zaqarclient.Client(ZAQAR_URL, ZAQAR_VERSION, conf=conf)
 
 
-def accept_9901():
+def accept(port):
     sock = socket.socket()
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(('0.0.0.0', 9901))
+    sock.bind(('0.0.0.0', port))
     sock.listen(1)
     return sock.accept()
 
 
 def main():
-    send, send_addr = accept_9901()
+    parser = argparse.ArgumentParser(
+        description='read messages from a zaqar queue and send them to a port')
+    parser.add_argument('--port', help='the port to send on', required=True,
+                        type=int)
+    parser.add_argument('--queue', help='the zaqar queue name for messages',
+                        required=True)
+    args = parser.parse_args()
+
+    send, send_addr = accept(args.port)
     print('connection from: {}'.format(send_addr))
     try:
         client = get_client()
-        queue = client.queue('sahara')
+        queue = client.queue(args.queue)
         while True:
             messages = queue.pop(count=10)
             for msg in messages:

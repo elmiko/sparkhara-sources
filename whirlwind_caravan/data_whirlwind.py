@@ -26,7 +26,7 @@ def get_client():
 
 def main():
     parser = argparse.ArgumentParser(
-        description='read a file and send it to the host:port')
+        description='read a file and send its lines to a zaqar queue')
     parser.add_argument('--file', help='the file to read', required=True)
     parser.add_argument('--queue', help='the zaqar queue name for messages',
                         required=True)

@@ -48,5 +48,5 @@ body {
 
 #packet_row {
     height: 400px;
-    overflow: scroll;
+    overflow: auto;
 }
