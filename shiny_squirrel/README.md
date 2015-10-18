@@ -51,6 +51,10 @@ a web page with the graph of counts
         "last-received": {
           "count": 0,
           "id": null
+        },
+        "since-last-get": {
+          "count": 0,
+          "ids": []
         }
       }
     }
@@ -67,19 +71,6 @@ a web page with the graph of counts
 **Response**
 
     201
-
-    {
-      "count-packets": {
-        "last-received": {
-          "count": 0,
-          "id": null
-        }
-        "since-last-get": {
-          "count": 0,
-          "ids": []
-        }
-      }
-    }
 
 **Request**
 
