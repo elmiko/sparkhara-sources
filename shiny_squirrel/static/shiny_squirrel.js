@@ -63,15 +63,18 @@ function packet_click(packet) {
   }
 
   var countline = d3.select("#packets");
-  countline.selectAll('p').remove();
+  countline.selectAll("p").remove();
+  var sorted_logs_url = "/sorted-logs?";
   packet.packet_ids.forEach(function (item) {
-    d3.json("/count-packets/" + item, function(error, data) {
-        if (error) throw error;
-        data['count-packet'].logs.forEach(function (item) {
-            countline.append('p')
-                .attr("class", "packet-log-line")
-                .text(item);
-        });
+    sorted_logs_url = sorted_logs_url + "ids=" + item + "&";
+  });
+  d3.json(sorted_logs_url, function(error, data) {
+    if (error) throw error;
+
+    data["sorted-logs"].lines.forEach(function (line) {
+      countline.append("p")
+        .attr("class", "packet-log-line")
+        .text(line);
     });
   });
 }

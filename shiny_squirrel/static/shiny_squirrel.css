@@ -45,3 +45,8 @@ body {
 .circle:hover {
   stroke: lightblue;
 }
+
+#packet_row {
+    height: 400px;
+    overflow: scroll;
+}

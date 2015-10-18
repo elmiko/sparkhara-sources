@@ -1,12 +1,21 @@
 <!DOCTYPE html>
 <html><head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"><meta charset="utf-8">
-<link rel="stylesheet" href="/static/shiny_squirrel.css">
+<link href="/static/shiny_squirrel.css" rel="stylesheet">
+<link href="/static/bootstrap.min.css" rel="stylesheet">
 </head><body>
 
-<div id="graph"></div>
-<div id="packets"></div>
+<div class="container">
+  <div class="row">
+    <div id="graph"></div>
+  </div>
+  <div class="row" id="packet_row">
+    <div id="packets"></div>
+  </div>
+</div>
 
+<script src="/static/jquery.min.js"></script>
+<script src="/static/bootstrap.min.js"></script>
 <script src="/static/d3.js"></script>
 <script src="/static/shiny_squirrel.js"></script>
 </body></html>

@@ -25,7 +25,8 @@ def store_packets(data):
 def normalize_log_lines(log_lines, service_name=None):
     contains_error = False
     for l in log_lines:
-        if 'ERROR' in l:
+        sl = l.split('::')
+        if 'ERROR' in sl[2]:
             contains_error = True
     data = {'_id': None if len(log_lines) == 0 else uuid.uuid4().hex,
             'count': len(log_lines),

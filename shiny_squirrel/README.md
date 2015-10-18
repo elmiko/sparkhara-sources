@@ -20,22 +20,6 @@ the routes available
 
 a web page with the graph of counts
 
-### totals
-
-**Request**
-
-    GET /totals
-
-**Response**
-
-    200
-
-    {
-      "totals": {
-        "all": 0
-      }
-    }
-
 ### log count packets
 
 **Request**
@@ -86,3 +70,36 @@ a web page with the graph of counts
         "logs": []
       }
     }
+
+### sorted log lines
+
+**Request**
+
+    GET /sorted-logs?ids={count packet id 1}&...&ids={count packet id n}
+
+**Response**
+
+    200
+
+    {
+      "sorted-logs": {
+        "lines": []
+      }
+    }
+
+### totals
+
+**Request**
+
+    GET /totals
+
+**Response**
+
+    200
+
+    {
+      "totals": {
+        "all": 0
+      }
+    }
+

@@ -1,4 +1,5 @@
 import copy
+import datetime
 
 import flask as f
 import pymongo
@@ -99,11 +100,6 @@ def index():
     return f.render_template('index.html')
 
 
-@app.route('/totals')
-def totals():
-    return f.jsonify(logtotals().to_dict())
-
-
 @app.route('/count-packets', methods=['GET', 'POST'])
 def count_packets():
     if f.request.method == 'POST':
@@ -129,6 +125,35 @@ def packet_detail(packet_id):
         return f.jsonify(message='packet not found'), 404
     ret = {'count-packet': {'id': packet_id, 'logs': packet.get('logs')}}
     return f.jsonify(ret)
+
+
+@app.route('/sorted-logs')
+def sorted_logs():
+    ids = f.request.args.getlist('ids')
+    print(ids)
+    logs = []
+    db = pymongo.MongoClient('10.0.1.107').sparkhara.count_packets
+    for i in ids:
+        packet = db.find_one(i)
+        if packet:
+            logs += packet.get('logs')
+
+    def log_sort(a, b):
+        print(a)
+        print(b)
+        date1 = datetime.datetime.strptime(a.split('::')[0],
+                                           '%Y-%m-%d %H:%M:%S.%f')
+        date2 = datetime.datetime.strptime(b.split('::')[0],
+                                           '%Y-%m-%d %H:%M:%S.%f')
+        return cmp(date1, date2)
+
+    ret = {'sorted-logs': {'lines': sorted(logs, log_sort)}}
+    return f.jsonify(ret), 200
+
+
+@app.route('/totals')
+def totals():
+    return f.jsonify(logtotals().to_dict())
 
 
 if __name__ == '__main__':
