@@ -11,6 +11,7 @@ _logtotals = None
 _countpackets = None
 
 LOG_ALL = 'all'
+LOG_UNKNOWN = 'unknown'
 
 
 def logtotals():
@@ -44,6 +45,7 @@ class LogTotals(object):
     def __init__(self):
         self.log_totals = {
             LOG_ALL: TotalCounter(),
+            LOG_UNKNOWN: TotalCounter(),
             }
 
     def get(self, log):
@@ -54,7 +56,11 @@ class LogTotals(object):
             'totals': {k: int(v.value) for k, v in self.log_totals.items()}}
 
     def add(self, log, count):
+        if log not in self.log_totals:
+            self.log_totals[log] = TotalCounter()
         self.log_totals[log].add(count)
+        if log != LOG_ALL:
+            self.log_totals[LOG_ALL].add(count)
 
     def update_from_dict(self, new_totals):
         for k, v in self.log_totals.items():
@@ -107,7 +113,7 @@ def count_packets():
         if not data:
             return f.jsonify(message='no data found'), 400
         countpackets().update_from_dict(data)
-        logtotals().add(LOG_ALL, data.get('count'))
+        logtotals().add(data.get('service', LOG_UNKNOWN), data.get('count'))
         status = 201
         ret = ''
     else:
