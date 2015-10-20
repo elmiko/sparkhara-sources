@@ -81,6 +81,7 @@ class CountPackets(object):
             'ids': [],
             'count': 0,
             'errors': False,
+            'by-service': {},
             }
 
     def to_dict(self):
@@ -92,13 +93,23 @@ class CountPackets(object):
             }
 
     def update_from_dict(self, new_packet):
+        if new_packet.get('service') not in self.since_last_get['by-service']:
+            self.since_last_get['by-service'][new_packet['service']] = {
+                    'ids': [],
+                    'count': 0,
+                    'errors': False,
+                    }
         self.last_packet['id'] = new_packet.get('id')
         self.last_packet['count'] = int(new_packet.get('count', 0))
         self.since_last_get['count'] += int(new_packet.get('count', 0))
+        self.since_last_get['by-service'][new_packet['service']]['count'] += int(new_packet.get('count', 0))
         if new_packet.get('id') is not None:
             self.since_last_get['ids'].append(new_packet.get('id'))
+            self.since_last_get['by-service'][new_packet['service']]['ids'].append(
+                new_packet.get('id'))
         if new_packet.get('errors') is True:
             self.since_last_get['errors'] = True
+            self.since_last_get['by-service'][new_packet['service']]['errors'] = True
 
 
 @app.route('/')

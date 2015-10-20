@@ -26,13 +26,20 @@ var line = d3.svg.line()
     .x(function(d) { return x(d.pos); })
     .y(function(d) { return y(d.count); });
 
-var svg = d3.select("#graph").append("svg")
+var total_graph = d3.select("#total-graph").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var service_graph = d3.select("#service-graph").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var count_list = [];
+var service_list = [];
 
 function circle_transform(item) {
   var scaled_pos = x(item.pos);
@@ -57,13 +64,29 @@ function get_count() {
   return data;
 }
 
+function get_count_for_service(service) {
+  var data = [];
+
+  count_list.forEach(function (item, idx, arr) {
+    var p = Object();
+    p.pos = idx;
+    p.count = +item.services[service].count;
+    p.packet_ids = item.services[service].ids;
+    p.errors = item.services[service].errors;
+    data.push(p)
+  });
+
+  return data;
+}
+
 function packet_click(packet) {
+  var countline = d3.select("#packets");
+  countline.selectAll("li").remove();
   if (packet.packet_ids.length == 0) {
+    countline.append("li").text("No logs found for that data point.");
     return;
   }
 
-  var countline = d3.select("#packets");
-  countline.selectAll("p").remove();
   var sorted_logs_url = "/sorted-logs?";
   packet.packet_ids.forEach(function (item) {
     sorted_logs_url = sorted_logs_url + "ids=" + item + "&";
@@ -72,15 +95,15 @@ function packet_click(packet) {
     if (error) throw error;
 
     data["sorted-logs"].lines.forEach(function (line) {
-      countline.append("p")
-        .attr("class", "packet-log-line")
+      countline.append("li")
+        .attr("class", "list-group-item")
         .text(line);
     });
   });
 }
 
-function initialize() {
-  svg.append("g")
+function initialize(graph, group_id) {
+  graph.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis)
@@ -89,7 +112,7 @@ function initialize() {
       .attr("dy", "2.25em")
       .text("seconds");
 
-  svg.append("g")
+  graph.append("g")
       .attr("class", "y axis")
       .call(yAxis)
     .append("text")
@@ -99,8 +122,8 @@ function initialize() {
       .style("text-anchor", "end")
       .text("logs lines");
 
-  svg.append("g")
-      .attr("id", "countline");
+  graph.append("g")
+      .attr("id", group_id);
 }
 
 function get_bar_class(data) {
@@ -112,9 +135,9 @@ function get_bar_class(data) {
 
 function update() {
   var data = get_count();
-  d3.select("#countline").selectAll("rect").remove();
+  d3.select("#total-countline").selectAll("rect").remove();
   data.forEach(function (item) {
-    d3.select("#countline")
+    d3.select("#total-countline")
         .append("rect")
           .datum(item)
           .attr("class", get_bar_class)
@@ -127,23 +150,30 @@ function update() {
 }
 
 function update_line_and_circles() {
-  var data = get_count();
-  d3.select("#countline").selectAll("path").remove();
-  d3.select("#countline").append("path")
-        .datum(data)
-        .attr("class", "line")
-        .attr("d", line);
-  data.forEach(function (item) {
-    d3.select("#countline").append("path")
-          .datum(item)
-          .attr("transform", circle_transform(item))
-          .attr("class", "circle")
-          .attr("d", d3.svg.symbol().size(40))
-          .on("click", packet_click);
+  var services = service_list;
+  var colors = ['teal', 'orangered', 'gold'];
+  d3.select("#service-countline").selectAll("path").remove();
+  services.forEach(function (item, idx) {
+    var data = get_count_for_service(item);
+    d3.select("#service-countline").append("path")
+          .datum(data)
+          .attr("class", "line")
+          .style("stroke", colors[idx])
+          .attr("d", line);
+    data.forEach(function (item) {
+      d3.select("#service-countline").append("path")
+            .datum(item)
+            .attr("transform", circle_transform(item))
+            .attr("class", "circle")
+            .attr("d", d3.svg.symbol().size(40))
+            .style("fill", colors[idx])
+            .on("click", packet_click);
+    });
   });
 }
 
-initialize();
+initialize(total_graph, "total-countline");
+initialize(service_graph, "service-countline");
 
 setInterval(function() {
   d3.json("/count-packets", function(error, data) {
@@ -155,6 +185,8 @@ setInterval(function() {
       p.total_count = data["count-packets"]["since-last-get"].count;
       p.packet_ids = data["count-packets"]["since-last-get"].ids;
       p.errors = data["count-packets"]["since-last-get"].errors;
+      p.services = data["count-packets"]["since-last-get"]["by-service"];
+      service_list = Object.keys(p.services);
 
       count_list.unshift(p);
       if (count_list.length >= 60) {
@@ -162,5 +194,6 @@ setInterval(function() {
       }
 
       update();
+      update_line_and_circles();
   });
-}, 3000);
+}, 1500);

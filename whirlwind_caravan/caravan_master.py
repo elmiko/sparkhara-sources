@@ -25,9 +25,12 @@ def store_packets(data):
 def normalize_log_lines(log_lines, service_name=None):
     contains_error = False
     for l in log_lines:
-        sl = l.split('::')
-        if 'ERROR' in sl[2]:
-            contains_error = True
+        try:
+            sl = l.split('::')
+            if 'ERROR' in sl[2]:
+                contains_error = True
+        except IndexError:
+            pass
     data = {'_id': None if len(log_lines) == 0 else uuid.uuid4().hex,
             'count': len(log_lines),
             'service': service_name,
@@ -53,5 +56,7 @@ if __name__ == '__main__':
     sahara_lines = ssc.socketTextStream('0.0.0.0', 9901)
     sahara_lines.foreachRDD(lambda rdd: process_generic(rdd, 'sahara'))
 
+    neutron_lines = ssc.socketTextStream('0.0.0.0', 9902)
+    neutron_lines.foreachRDD(lambda rdd: process_generic(rdd, 'neutron'))
     ssc.start()
     ssc.awaitTermination()

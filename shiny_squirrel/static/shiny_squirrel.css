@@ -32,12 +32,12 @@ body {
 
 .line {
   fill: none;
-  stroke: steelblue;
+  /*stroke: steelblue;*/
   stroke-width: 1.5px;
 }
 
 .circle {
-  fill: steelblue;
+  /*fill: steelblue;*/
   stroke: none;
   stroke-width: 2px;
 }
@@ -47,6 +47,6 @@ body {
 }
 
 #packet_row {
-    height: 400px;
+    height: 200px;
     overflow: auto;
 }
