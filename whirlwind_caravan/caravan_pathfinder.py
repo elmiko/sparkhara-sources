@@ -47,13 +47,14 @@ def main():
         client = get_client()
         queue = client.queue(args.queue)
         while True:
-            messages = queue.pop(count=10)
+            messages = [m for m in queue.pop(count=10)]
+            if len(messages) == 0:
+                time.sleep(1)
+                continue
             for msg in messages:
                 print('received {} bytes'.format(len(msg.body)))
                 s = send.send(msg.body)
                 print('sent {} bytes'.format(s))
-            else:
-                time.sleep(1)
     finally:
         send.close()
 
