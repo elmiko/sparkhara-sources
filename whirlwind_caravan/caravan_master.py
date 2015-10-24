@@ -25,12 +25,11 @@ def store_packets(data):
 def normalize_log_lines(log_lines, service_name=None):
     contains_error = False
     for l in log_lines:
-        try:
-            sl = l.split('::')
-            if 'ERROR' in sl[2]:
-                contains_error = True
-        except IndexError:
-            pass
+        if 'Authorization failed' in l:
+            contains_error = True
+            service_name = 'errors'
+            break
+
     data = {'_id': None if len(log_lines) == 0 else uuid.uuid4().hex,
             'count': len(log_lines),
             'service': service_name,
@@ -47,7 +46,7 @@ def restore_newlines(loglines, separator='::newline::'):
 
 def process_generic(rdd, service_name):
     log_lines = rdd.collect()
-    restore_newlines(log_lines)
+    #restore_newlines(log_lines)
     data = normalize_log_lines(log_lines, service_name)
     data['processed-at'] = datetime.datetime.now().strftime(
         '%Y-%m-%d %H:%M:%S.%f')[:-3]
@@ -60,13 +59,7 @@ if __name__ == '__main__':
     ssc = StreamingContext(sc, 1)
 
     sahara_lines = ssc.socketTextStream('127.0.0.1', 9901)
-    sahara_lines.foreachRDD(lambda rdd: process_generic(rdd, 'sahara'))
-
-    neutron_lines = ssc.socketTextStream('127.0.0.1', 9902)
-    neutron_lines.foreachRDD(lambda rdd: process_generic(rdd, 'neutron'))
-
-    nova_lines = ssc.socketTextStream('127.0.0.1', 9903)
-    nova_lines.foreachRDD(lambda rdd: process_generic(rdd, 'nova'))
+    sahara_lines.foreachRDD(lambda rdd: process_generic(rdd, 'keystone'))
 
     ssc.start()
     ssc.awaitTermination()

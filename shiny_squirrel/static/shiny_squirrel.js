@@ -39,7 +39,7 @@ var service_graph = d3.select("#service-graph").append("svg")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var count_list = [];
-var service_list = [];
+var service_list = ['keystone', 'errors'];
 
 function circle_transform(item) {
   var scaled_pos = x(item.pos);
@@ -70,14 +70,15 @@ function get_count_for_service(service) {
   count_list.forEach(function (item, idx, arr) {
     var p = Object();
     p.pos = idx;
+    p.count = +0;
+    p.packet_ids = [];
+    p.errors = false;
     if ("services" in item) {
-      p.count = +item.services[service].count;
-      p.packet_ids = item.services[service].ids;
-      p.errors = item.services[service].errors;
-    } else {
-      p.count = +0;
-      p.packet_ids = [];
-      p.errors = false;
+      if (service in item.services) {
+        p.count = +item.services[service].count;
+        p.packet_ids = item.services[service].ids;
+        p.errors = item.services[service].errors;
+      }
     }
     data.push(p)
   });
@@ -192,7 +193,6 @@ setInterval(function() {
       p.packet_ids = data["count-packets"]["since-last-get"].ids;
       p.errors = data["count-packets"]["since-last-get"].errors;
       p.services = data["count-packets"]["since-last-get"]["by-service"];
-      service_list = Object.keys(p.services);
 
       count_list.unshift(p);
       if (count_list.length >= 60) {
