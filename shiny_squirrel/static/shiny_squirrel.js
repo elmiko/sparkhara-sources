@@ -70,9 +70,15 @@ function get_count_for_service(service) {
   count_list.forEach(function (item, idx, arr) {
     var p = Object();
     p.pos = idx;
-    p.count = +item.services[service].count;
-    p.packet_ids = item.services[service].ids;
-    p.errors = item.services[service].errors;
+    if ("services" in item) {
+      p.count = +item.services[service].count;
+      p.packet_ids = item.services[service].ids;
+      p.errors = item.services[service].errors;
+    } else {
+      p.count = +0;
+      p.packet_ids = [];
+      p.errors = false;
+    }
     data.push(p)
   });
 
