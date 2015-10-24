@@ -136,7 +136,7 @@ def count_packets():
 
 @app.route('/count-packets/<packet_id>', methods=['GET'])
 def packet_detail(packet_id):
-    db = pymongo.MongoClient('10.0.1.107').sparkhara.count_packets
+    db = pymongo.MongoClient().sparkhara.count_packets
     packet = db.find_one(packet_id)
     if packet is None:
         return f.jsonify(message='packet not found'), 404
@@ -149,7 +149,7 @@ def sorted_logs():
     ids = f.request.args.getlist('ids')
     print(ids)
     logs = []
-    db = pymongo.MongoClient('10.0.1.107').sparkhara.count_packets
+    db = pymongo.MongoClient().sparkhara.count_packets
     for i in ids:
         packet = db.find_one(i)
         if packet:

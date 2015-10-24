@@ -96,20 +96,32 @@ def ship_it(logentries, send):
     '''
     print('shipping {} entries'.format(len(logentries)))
     for entry in logentries:
-        s = send.send(entry.body)
-        print('sent {} bytes from {} entries'.format(s, len(logentries)))
+        bodydata = entry.body + '\n'
+        if send is None:
+            print(bodydata)
+        else:
+            s = send.send(bodydata)
+            print('sent {} bytes from {} entries'.format(s, len(logentries)))
 
 
 def main():
     parser = argparse.ArgumentParser(
         description='read a log file and send its lines to a socket')
     parser.add_argument('--file', help='the file to read', required=True)
-    parser.add_argument('--port', help='the port to send on', required=True,
-                        type=int)
+    parser.add_argument('--port', help='the port to send on', type=int)
+    parser.add_argument('--debug', help='turn off socket sending',
+                        action='store_true')
     args = parser.parse_args()
 
-    send, send_addr = accept(args.port)
-    print('connection from: {}'.format(send_addr))
+    if args.debug:
+        print('running in debug')
+
+    if args.port:
+        print('awaiting connection')
+        send, send_addr = accept(args.port)
+        print('connection from: {}'.format(send_addr))
+    else:
+        send = None
 
     logfile = open(args.file, 'r')
     logfile.seek(0, os.SEEK_END)
@@ -121,19 +133,25 @@ def main():
     shippedentries = 0
     while logfile.tell() != lfsize:
         logentry = process_log_entry(logfile, lfsize)
+        if logentry is None:
+            badentries += 1
+            continue
+        if args.debug:
+            print('processed')
+            print(logentry)
         previous_datestamp = (logentry.datestamp if len(logentries) == 0
                               else logentries[-1].datestamp)
         datestamp_delta = logentry.datestamp - previous_datestamp
         if datestamp_delta.total_seconds() != 0:
             replace_newlines(logentries)
-            ship_it(logentries)
+            ship_it(logentries, send)
             shippedentries += len(logentries)
             logentries = []
+            if args.debug:
+                print('sleeping for {} seconds'.format(
+                      datestamp_delta.total_seconds()))
             time.sleep(datestamp_delta.total_seconds())
-        if logentry is not None:
-            logentries.append(logentry)
-        else:
-            badentries += 1
+        logentries.append(logentry)
 
     print('shipped {} valid entries'.format(shippedentries))
     print('found {} bad entries'.format(badentries))
