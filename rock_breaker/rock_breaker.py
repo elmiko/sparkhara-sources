@@ -40,19 +40,30 @@ bad_req = {
     }
 
 
-def good_guy(url):
+def good(url):
     while True:
-        resp = requests.post(url, json=good_req)
-        print(resp)
+        for i in range(random.randint(1, 3)):
+            requests.post(url, json=good_req)
         time.sleep(1)
 
 
-def bad_guy(url):
+def forgetful(url):
     while True:
-        for i in range(random.randint(1, 10)):
-            resp = requests.post(url, json=bad_req)
-            print(resp)
-        time.sleep(random.randint(3, 7))
+        time.sleep(random.randint(5, 10))
+        requests.post(url, json=bad_req)
+        time.sleep(random.randint(5, 10))
+
+
+def bad(url):
+    while True:
+        try:
+            input('press enter to start bad requests sequence')
+        except Exception:
+            pass
+        for i in range(10):
+            for i in range(min(i*10, 40)):
+                requests.post(url, json=bad_req)
+            time.sleep(1)
 
 
 def main():
@@ -68,10 +79,14 @@ def main():
         print('unrecognized keystone url')
         return
 
-    good_th = threading.Thread(target=good_guy, args=(url,))
+    print('beginning auth attempts')
+    good_th = threading.Thread(target=good, args=(url,))
     good_th.start()
 
-    bad_th = threading.Thread(target=bad_guy, args=(url,))
+    forgetful_th = threading.Thread(target=forgetful, args=(url,))
+    forgetful_th.start()
+
+    bad_th = threading.Thread(target=bad, args=(url,))
     bad_th.start()
 
 if __name__ == '__main__':
