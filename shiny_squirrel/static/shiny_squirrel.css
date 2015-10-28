@@ -19,14 +19,20 @@ body {
   stroke: none;
 }
 
-.bar-errors {
-  fill: red;
-  stroke: none;
-}
-
 .bar:hover {
   fill: lightblue;
   stroke: steelblue;
+  stroke-width: 1px;
+}
+
+.bar-errors {
+  fill: crimson;
+  stroke: none;
+}
+
+.bar-errors:hover {
+  fill: tomato;
+  stroke: crimson;
   stroke-width: 1px;
 }
 

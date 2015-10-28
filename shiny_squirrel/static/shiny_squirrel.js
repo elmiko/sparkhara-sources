@@ -7,11 +7,11 @@ var x = d3.scale.linear()
     .range([0, width]);
 
 var x_axis_scale = d3.scale.linear()
-    .domain([0, 180])
+    .domain([0, 90])
     .range([0, width]);
 
 var y = d3.scale.linear()
-    .domain([0, 32])
+    .domain([0, 100])
     .range([height, 0]);
 
 var xAxis = d3.svg.axis()
@@ -39,7 +39,7 @@ var service_graph = d3.select("#service-graph").append("svg")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var count_list = [];
-var service_list = ['keystone', 'errors'];
+var service_list = ['errors', 'keystone'];
 
 function circle_transform(item) {
   var scaled_pos = x(item.pos);
@@ -103,7 +103,12 @@ function packet_click(packet) {
 
     data["sorted-logs"].lines.forEach(function (line) {
       countline.append("li")
-        .attr("class", "list-group-item")
+        .attr("class", function () {
+          if (line.search("WARNING") == -1) {
+            return "list-group-item";
+          } else {
+            return "list-group-item list-group-item-danger";
+          }})
         .text(line);
     });
   });
@@ -158,7 +163,7 @@ function update() {
 
 function update_line_and_circles() {
   var services = service_list;
-  var colors = ['teal', 'orangered', 'gold'];
+  var colors = ['crimson', 'steelblue'];
   d3.select("#service-countline").selectAll("path").remove();
   services.forEach(function (item, idx) {
     var data = get_count_for_service(item);
