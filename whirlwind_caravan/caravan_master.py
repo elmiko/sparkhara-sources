@@ -23,20 +23,28 @@ def store_packets(data):
 
 
 def normalize_log_lines(log_lines, service_name=None):
-    contains_error = False
+    error_lines = []
+    nonerror_lines = []
     for l in log_lines:
         if 'Authorization failed' in l:
-            contains_error = True
-            service_name = 'errors'
-            break
+            error_lines.append(l)
+        else:
+            nonerror_lines.append(l)
 
-    data = {'_id': None if len(log_lines) == 0 else uuid.uuid4().hex,
-            'count': len(log_lines),
+
+    data = {'_id': None if len(nonerror_lines) == 0 else uuid.uuid4().hex,
+            'count': len(nonerror_lines),
             'service': service_name,
-            'errors': contains_error,
-            'logs': log_lines,
+            'errors': False,
+            'logs': nonerror_lines,
             }
-    return data
+    error_data = {'_id': None if len(error_lines) == 0 else uuid.uuid4().hex,
+            'count': len(error_lines),
+            'service': 'errors',
+            'errors': True,
+            'logs': error_lines,
+            }
+    return data, error_data
 
 
 def restore_newlines(loglines, separator='::newline::'):
@@ -47,11 +55,15 @@ def restore_newlines(loglines, separator='::newline::'):
 def process_generic(rdd, service_name):
     log_lines = rdd.collect()
     #restore_newlines(log_lines)
-    data = normalize_log_lines(log_lines, service_name)
+    data, error_data = normalize_log_lines(log_lines, service_name)
     data['processed-at'] = datetime.datetime.now().strftime(
         '%Y-%m-%d %H:%M:%S.%f')[:-3]
+    error_data['processed-at'] = data['processed-at']
     store_packets(data)
     signal_rest_server(data)
+    if error_data['_id'] is not None:
+        store_packets(error_data)
+        signal_rest_server(error_data)
 
 
 if __name__ == '__main__':
