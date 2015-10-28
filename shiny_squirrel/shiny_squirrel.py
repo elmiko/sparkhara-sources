@@ -147,7 +147,6 @@ def packet_detail(packet_id):
 @app.route('/sorted-logs')
 def sorted_logs():
     ids = f.request.args.getlist('ids')
-    print(ids)
     logs = []
     db = pymongo.MongoClient().sparkhara.count_packets
     for i in ids:
@@ -156,12 +155,10 @@ def sorted_logs():
             logs += packet.get('logs')
 
     def log_sort(a, b):
-        print(a)
-        print(b)
         try:
-            date1 = datetime.datetime.strptime(a.split('::')[0],
+            date1 = datetime.datetime.strptime(a[:23],
                                                '%Y-%m-%d %H:%M:%S.%f')
-            date2 = datetime.datetime.strptime(b.split('::')[0],
+            date2 = datetime.datetime.strptime(b[:23],
                                                '%Y-%m-%d %H:%M:%S.%f')
         except ValueError:
             return 0
