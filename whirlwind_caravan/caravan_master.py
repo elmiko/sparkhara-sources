@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import sys
 import uuid
@@ -46,15 +47,23 @@ def print_usage():
 
 
 def main():
-    if len(sys.argv) != 3:
-        print_usage()
-        return
-    mongo_url = sys.argv[1]
-    rest_url = sys.argv[2]
+    parser = argparse.ArgumentParser(
+        description='process some log messages, storing them and signaling '
+                    'a rest server')
+    parser.add_argument('--mongo', help='the mongodb url',
+                        required=True)
+    parser.add_argument('--rest', help='the rest endpoint to signal',
+                        required=True)
+    parser.add_argument('--port', help='the port to listen on',
+                        default=9901, type=int)
+    args = parser.parse_args()
+    mongo_url = args.mongo
+    rest_url = args.rest
+
     sc = SparkContext(appName='SparkharaLogCounter')
     ssc = StreamingContext(sc, 1)
 
-    lines = ssc.socketTextStream('0.0.0.0', 9901)
+    lines = ssc.socketTextStream('0.0.0.0', args.port)
     lines.foreachRDD(lambda rdd: process_generic(rdd, mongo_url, rest_url))
 
     ssc.start()
