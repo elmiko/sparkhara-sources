@@ -93,7 +93,7 @@ class CountPackets(object):
             }
 
     def update_from_dict(self, new_packet):
-        if new_packet.get('service') not in self.since_last_get['by-service']:
+        if new_packet['service'] not in self.since_last_get['by-service']:
             self.since_last_get['by-service'][new_packet['service']] = {
                     'ids': [],
                     'count': 0,
@@ -123,8 +123,11 @@ def count_packets():
         data = f.request.get_json()
         if not data:
             return f.jsonify(message='no data found'), 400
+        print('received some data')
+        print(data)
+        data['service'] = data.get('service') or LOG_UNKNOWN
         countpackets().update_from_dict(data)
-        logtotals().add(data.get('service', LOG_UNKNOWN), data.get('count'))
+        logtotals().add(data.get('service'), data.get('count'))
         status = 201
         ret = ''
     else:
