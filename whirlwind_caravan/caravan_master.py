@@ -4,6 +4,7 @@ import sys
 import uuid
 
 import pymongo
+from pyspark import SparkConf
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
 import requests
@@ -40,12 +41,6 @@ def process_generic(rdd, mongo_url, rest_url):
     signal_rest_server(data, rest_url)
 
 
-def print_usage():
-    print('caravan_master requires 2 arguments, mongo url and rest url')
-    print('example:')
-    print('spark-submit caravan_master.py mongodb://127.0.0.1 http://127.0.0.1/endpoint')
-
-
 def main():
     parser = argparse.ArgumentParser(
         description='process some log messages, storing them and signaling '
@@ -56,11 +51,18 @@ def main():
                         required=True)
     parser.add_argument('--port', help='the port to listen on',
                         default=9901, type=int)
+    parser.add_argument('--appname', help='the name of the spark application',
+                        default='SparkharaLogCounter')
+    parser.add_argument('--master',
+                        help='the master url for the spark cluster')
     args = parser.parse_args()
     mongo_url = args.mongo
     rest_url = args.rest
 
-    sc = SparkContext(appName='SparkharaLogCounter')
+    sconf = SparkConf().setAppName(args.appname)
+    if args.master:
+        sconf.setMaster(args.master)
+    sc = SparkContext(conf=sconf)
     ssc = StreamingContext(sc, 1)
 
     lines = ssc.socketTextStream('0.0.0.0', args.port)
