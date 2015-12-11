@@ -1,27 +1,9 @@
 import argparse
+import json
 import socket
 import time
 
-from zaqarclient.queues import client as zaqarclient
-
-conf = {
-    'auth_opts': {
-        'backend': 'keystone',
-        'options': {
-            'os_username': 'demo',
-            'os_password': 'openstack',
-            'os_project_name': 'demo',
-            'os_auth_url': 'http://10.0.1.107:5000/v2.0/',
-            }
-        }
-    }
-
-ZAQAR_URL = 'http://10.0.1.107:8888/'
-ZAQAR_VERSION = 1.1
-
-
-def get_client():
-    return zaqarclient.Client(ZAQAR_URL, ZAQAR_VERSION, conf=conf)
+import kombu
 
 
 def accept(port):
@@ -34,29 +16,33 @@ def accept(port):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='read messages from a zaqar queue and send them to a port')
+        description='read messages from an amqp broker and send them to a port')
     parser.add_argument('--port', help='the port to send on', required=True,
                         type=int)
-    parser.add_argument('--queue', help='the zaqar queue name for messages',
+    parser.add_argument('--url', help='the amqp broker url',
                         required=True)
     args = parser.parse_args()
 
     send, send_addr = accept(args.port)
     print('connection from: {}'.format(send_addr))
     try:
-        client = get_client()
-        queue = client.queue(args.queue)
+        conn = kombu.Connection(args.url)
+        queue = conn.SimpleQueue('sparkhara')
         while True:
-            messages = [m for m in queue.pop(count=10)]
-            if len(messages) == 0:
+            try:
+                message = queue.get(block=False, timeout=1)
+            except kombu.simple.SimpleQueue.Empty:
                 time.sleep(1)
                 continue
-            for msg in messages:
-                print('received {} bytes'.format(len(msg.body)))
-                s = send.send(msg.body)
-                print('sent {} bytes'.format(s))
+            print('Received message:')
+            print(message.payload)
+            s = send.send(json.dumps(message.payload))
+            s += send.send('\n')
+            print('sent {} bytes'.format(s))
+            message.ack()
     finally:
         send.close()
+        pass
 
 if __name__ == '__main__':
     main()
