@@ -1,10 +1,8 @@
 FROM fedora:22
 MAINTAINER michael mccune <msm@redhat.com>
 
-RUN ["/usr/bin/dnf", "install", "-y", \
-     "python-flask", \
-     "python-pymongo" \
-    ]
+RUN dnf install -y python-flask python-pymongo && \
+    dnf clean all
 
 ADD shiny_squirrel.py /opt/shiny_squirrel/
 ADD static/* /opt/shiny_squirrel/static/
