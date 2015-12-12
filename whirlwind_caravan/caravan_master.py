@@ -33,7 +33,7 @@ def normalize_log_lines(log_lines, service_name=None):
 
 def process_generic(rdd, mongo_url, rest_url):
     log_lines = rdd.collect()
-    print(log_lines)
+    print(len(log_lines), "processed")
     data = normalize_log_lines(log_lines)
     data['processed-at'] = datetime.datetime.now().strftime(
         '%Y-%m-%d %H:%M:%S.%f')[:-3]
