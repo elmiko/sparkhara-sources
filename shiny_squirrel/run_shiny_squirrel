@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+
+/usr/bin/python /opt/sparkhara-sources/shiny_squirrel/shiny_squirrel.py
