@@ -13,5 +13,5 @@ export SPARK_LOCAL_HOSTNAME=$(hostname -i)
 
 spark-submit /caravan_master.py --port 1984 \
                                 --master spark://spark-master:7077 \
-                                --mongo mongo://mongodb \
+                                --mongo mongodb://mongodb \
                                 --rest http:XYZ
