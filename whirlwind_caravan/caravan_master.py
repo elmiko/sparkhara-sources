@@ -65,7 +65,7 @@ def main():
     sc = SparkContext(conf=sconf)
     ssc = StreamingContext(sc, 1)
 
-    lines = ssc.socketTextStream('0.0.0.0', args.port)
+    lines = ssc.socketTextStream('caravan-pathfinder', args.port)
     lines.foreachRDD(lambda rdd: process_generic(rdd, mongo_url, rest_url))
 
     ssc.start()

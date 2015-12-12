@@ -1,18 +1,16 @@
 kind: ReplicationController
 apiVersion: v1
 metadata:
-  name: caravan-controller
+  name: caravan-master-controller
 spec:
   replicas: 1
   selector:
-    component: caravan
+    component: caravan-master
   template:
     metadata:
       labels:
-        component: caravan
+        component: caravan-master
     spec:
       containers:
-        - name: caravan-pathfinder
-          image: caravan-pathfinder
         - name: caravan-master
-          image: caravan-master
+          image: 172.30.122.181:5000/uber/caravan_master
