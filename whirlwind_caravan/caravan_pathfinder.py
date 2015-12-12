@@ -17,8 +17,9 @@ def accept(port):
 def main():
     parser = argparse.ArgumentParser(
         description='read messages from an amqp broker and send them to a port')
-    parser.add_argument('--port', help='the port to send on', required=True,
-                        type=int)
+    parser.add_argument('--port', help='the port to send on',
+                        type=int,
+                        default=1984)
     parser.add_argument('--url', help='the amqp broker url',
                         required=True)
     args = parser.parse_args()
