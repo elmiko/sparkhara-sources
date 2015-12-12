@@ -4,10 +4,8 @@ RUN yum install -y python-pymongo python-requests && \
     yum clean all
 
 ADD caravan_master.py /
+ADD start_master.sh /
 
-ENTRYPOINT ["/opt/spark/bin/spark-submit", \
-	    "/caravan_master.py", \
-	    "--port", "1984", \
-            "--master", "spark://spark-master:7077", \
-	    "--mongo", "mongo://???", \
-	    "--rest", "http://???"]
+ENTRYPOINT ["/start_master.sh", \
+	    "spark-master-badt", \
+	    "mongodb"]
