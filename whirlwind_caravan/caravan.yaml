@@ -1,0 +1,18 @@
+kind: ReplicationController
+apiVersion: v1
+metadata:
+  name: caravan-controller
+spec:
+  replicas: 1
+  selector:
+    component: caravan
+  template:
+    metadata:
+      labels:
+        component: caravan
+    spec:
+      containers:
+        - name: caravan-pathfinder
+          image: caravan-pathfinder
+        - name: caravan-master
+          image: caravan-master
