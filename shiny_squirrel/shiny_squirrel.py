@@ -1,3 +1,4 @@
+import argparse
 import copy
 import datetime
 
@@ -7,6 +8,7 @@ import pymongo
 
 app = f.Flask(__name__)
 
+_mongourl = None
 _logtotals = None
 _countpackets = None
 
@@ -139,7 +141,7 @@ def count_packets():
 
 @app.route('/count-packets/<packet_id>', methods=['GET'])
 def packet_detail(packet_id):
-    db = pymongo.MongoClient('10.0.1.107').sparkhara.count_packets
+    db = pymongo.MongoClient(_mongourl).sparkhara.count_packets
     packet = db.find_one(packet_id)
     if packet is None:
         return f.jsonify(message='packet not found'), 404
@@ -152,7 +154,7 @@ def sorted_logs():
     ids = f.request.args.getlist('ids')
     print(ids)
     logs = []
-    db = pymongo.MongoClient('10.0.1.107').sparkhara.count_packets
+    db = pymongo.MongoClient(_mongourl).sparkhara.count_packets
     for i in ids:
         packet = db.find_one(i)
         if packet:
@@ -180,5 +182,13 @@ def totals():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='run the shiny squirrel server')
+    parser.add_argument('--mongo', help='the mongodb url',
+                        required=True)
+    args = parser.parse_args()
+    _mongourl = args.mongo
+    print('MongoDB at {}'.format(_mongourl))
+
     app.debug = True
     app.run(host='0.0.0.0', port=9050)
