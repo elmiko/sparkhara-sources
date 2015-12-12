@@ -1,3 +1,4 @@
 #!/usr/bin/bash
 
-/usr/bin/python /opt/sparkhara-sources/shiny_squirrel/shiny_squirrel.py
+/usr/bin/python \
+    /opt/shiny_squirrel/shiny_squirrel.py --mongo "${MONGO_URL}"
