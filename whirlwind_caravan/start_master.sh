@@ -2,6 +2,7 @@
 
 [ -z "$1" ] && echo "SPARK MASTER SERVICE NAME not provided" && exit
 [ -z "$2" ] && echo "MONGODB SERVICE NAME not provided" && exit
+[ -z "$3" ] && echo "SHINY SQUIRREL SERVICE NAME not provided" && exit
 
 echo "args provided: $*"
 
@@ -20,4 +21,4 @@ MONGO_PASS=$(cat /etc/mongo-secret/password)
 
 spark-submit /caravan_master.py --master spark://spark-master:7077 \
                                 --mongo mongodb://${MONGO_USER}:${MONGO_PASS}@${MONGODB_SERVICE_NAME}/sparkhara \
-                                --rest http:XYZ
+                                --rest http://$3:9050
