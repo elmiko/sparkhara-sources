@@ -21,4 +21,4 @@ MONGO_PASS=$(cat /etc/mongo-secret/password)
 
 spark-submit /caravan_master.py --master spark://spark-master:7077 \
                                 --mongo mongodb://${MONGO_USER}:${MONGO_PASS}@${MONGODB_SERVICE_NAME}/sparkhara \
-                                --rest http://$3:9050
+                                --rest http://$3:9050/count-packets
