@@ -11,7 +11,6 @@ echo "$(eval echo \$${MONGODB_SERVICE_NAME^^}_SERVICE_HOST) mongodb" >> /tmp/hos
 # because the hostname only resolves locally
 export SPARK_LOCAL_HOSTNAME=$(hostname -i)
 
-spark-submit /caravan_master.py --port 1984 \
-                                --master spark://spark-master:7077 \
+spark-submit /caravan_master.py --master spark://spark-master:7077 \
                                 --mongo mongodb://sparkhara:openstack@mongodb/sparkhara \
                                 --rest http:XYZ
