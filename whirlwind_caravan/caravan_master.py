@@ -49,8 +49,8 @@ def main():
                         required=True)
     parser.add_argument('--rest', help='the rest endpoint to signal',
                         required=True)
-    parser.add_argument('--port', help='the port to listen on',
-                        default=9901, type=int)
+    parser.add_argument('--port', help='the port to receive from',
+                        default=1984, type=int)
     parser.add_argument('--appname', help='the name of the spark application',
                         default='SparkharaLogCounter')
     parser.add_argument('--master',

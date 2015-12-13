@@ -26,26 +26,27 @@ def main():
                         required=True)
     args = parser.parse_args()
 
-    send, send_addr = accept(args.port)
-    print('connection from: {}'.format(send_addr))
-    try:
-        conn = kombu.Connection(args.url)
-        queue = conn.SimpleQueue('sparkhara')
-        while True:
-            try:
-                message = queue.get(block=False, timeout=1)
-            except kombu.simple.SimpleQueue.Empty:
-                time.sleep(1)
-                continue
-            print('Received message:')
-            print(message.payload)
-            s = send.send(json.dumps(message.payload))
-            s += send.send('\n')
-            print('sent {} bytes'.format(s))
-            message.ack()
-    finally:
-        send.close()
-        pass
+    while True:
+        send, send_addr = accept(args.port)
+        print('connection from: {}'.format(send_addr))
+        try:
+            conn = kombu.Connection(args.url)
+            queue = conn.SimpleQueue('sparkhara')
+            while True:
+                try:
+                    message = queue.get(block=False, timeout=1)
+                except kombu.simple.SimpleQueue.Empty:
+                    time.sleep(1)
+                    continue
+                print('Received message:')
+                print(message.payload)
+                s = send.send(json.dumps(message.payload))
+                s += send.send('\n')
+                print('sent {} bytes'.format(s))
+                message.ack()
+        finally:
+            send.close()
+            pass
 
 if __name__ == '__main__':
     main()
