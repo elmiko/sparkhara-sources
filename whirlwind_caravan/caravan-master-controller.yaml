@@ -18,6 +18,7 @@ spec:
       containers:
         - name: caravan-master
           image: 172.30.122.181:5000/uber/caravan_master
+          args: ["spark-master-badt", "mongodb"]
           volumeMounts:
             - name: mongo-secret-volume
               mountPath: /etc/mongo-secret
