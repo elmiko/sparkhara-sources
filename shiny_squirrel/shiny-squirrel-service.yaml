@@ -1,0 +1,9 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: shiny-squirrel
+spec:
+  ports:
+    - port: 9050
+  selector:
+    component: shiny-squirrel
