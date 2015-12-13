@@ -1,5 +1,10 @@
 #!/bin/sh
 
+[ -z "$1" ] && echo "SPARK MASTER SERVICE NAME not provided" && exit
+[ -z "$2" ] && echo "MONGODB SERVICE NAME not provided" && exit
+
+echo "args provided: $*"
+
 . /common.sh
 
 MASTER_SERVICE_NAME=${1//-/_}
