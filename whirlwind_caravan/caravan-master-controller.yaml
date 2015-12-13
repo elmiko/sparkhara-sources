@@ -11,6 +11,14 @@ spec:
       labels:
         component: caravan-master
     spec:
+      volumes:
+        - name: mongo-secret-volume
+          secret:
+            secretName: mongo-secret
       containers:
         - name: caravan-master
           image: 172.30.122.181:5000/uber/caravan_master
+          volumeMounts:
+            - name: mongo-secret-volume
+              mountPath: /etc/mongo-secret
+              readOnly: true
