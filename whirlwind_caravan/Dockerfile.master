@@ -1,13 +1,12 @@
 FROM openshift-spark-base
 
-RUN yum install -y python-pymongo python-requests && \
-    yum clean all
+RUN yum install -y python-pip python-requests && \
+    yum clean all && \
+    pip install pymongo==3.0.3
 
 ADD caravan_master.py /
+ADD start_master.sh /
 
-ENTRYPOINT ["/opt/spark/bin/spark-submit", \
-	    "/caravan_master.py", \
-	    "--port", "1984", \
-            "--master", "spark://spark-master:7077", \
-	    "--mongo", "mongo://???", \
-	    "--rest", "http://???"]
+ENTRYPOINT ["/start_master.sh", \
+	    "spark-master-badt", \
+	    "mongodb"]
