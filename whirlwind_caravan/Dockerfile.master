@@ -1,7 +1,8 @@
 FROM openshift-spark-base
 
-RUN yum install -y python-pymongo python-requests && \
-    yum clean all
+RUN yum install -y python-pip python-requests && \
+    yum clean all && \
+    pip install pymongo==3.0.3
 
 ADD caravan_master.py /
 ADD start_master.sh /
