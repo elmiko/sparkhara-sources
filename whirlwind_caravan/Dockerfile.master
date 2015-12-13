@@ -7,6 +7,4 @@ RUN yum install -y python-pip python-requests && \
 ADD caravan_master.py /
 ADD start_master.sh /
 
-ENTRYPOINT ["/start_master.sh", \
-	    "spark-master-badt", \
-	    "mongodb"]
+ENTRYPOINT ["/start_master.sh"]

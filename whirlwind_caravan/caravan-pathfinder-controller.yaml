@@ -14,3 +14,4 @@ spec:
       containers:
         - name: caravan-pathfinder
           image: 172.30.122.181:5000/uber/caravan_pathfinder
+          args: ["amqp://10.19.20.5/"]
