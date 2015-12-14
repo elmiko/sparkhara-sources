@@ -5,6 +5,5 @@ metadata:
 spec:
   ports:
     - port: 1984
-      targetPort: 1984
   selector:
     component: caravan-pathfinder

@@ -1,24 +1,24 @@
 kind: ReplicationController
 apiVersion: v1
 metadata:
-  name: caravan-master-controller
+  name: shiny-squirrel-controller
 spec:
   replicas: 1
   selector:
-    component: caravan-master
+    component: shiny-squirrel
   template:
     metadata:
       labels:
-        component: caravan-master
+        component: shiny-squirrel
     spec:
       volumes:
         - name: mongo-secret-volume
           secret:
             secretName: mongo-secret
       containers:
-        - name: caravan-master
-          image: 172.30.122.181:5000/uber/caravan_master
-          args: ["spark-master-badt", "mongodb", "shiny-squirrel"]
+        - name: shiny-squirrel
+          image: 172.30.122.181:5000/uber/shiny_squirrel
+          args: ["mongodb"]
           volumeMounts:
             - name: mongo-secret-volume
               mountPath: /etc/mongo-secret
