@@ -55,6 +55,9 @@ def main():
                         default='SparkharaLogCounter')
     parser.add_argument('--master',
                         help='the master url for the spark cluster')
+    parser.add_argument('--socket',
+                        help='the socket to attach for streaming text data',
+                        default='caravan-pathfinder')
     args = parser.parse_args()
     mongo_url = args.mongo
     rest_url = args.rest
@@ -65,7 +68,7 @@ def main():
     sc = SparkContext(conf=sconf)
     ssc = StreamingContext(sc, 1)
 
-    lines = ssc.socketTextStream('caravan-pathfinder', args.port)
+    lines = ssc.socketTextStream(args.socket, args.port)
     lines.foreachRDD(lambda rdd: process_generic(rdd, mongo_url, rest_url))
 
     ssc.start()
