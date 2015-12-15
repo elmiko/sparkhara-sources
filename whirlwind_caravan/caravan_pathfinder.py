@@ -24,6 +24,8 @@ def main():
                         default=1984)
     parser.add_argument('--url', help='the amqp broker url',
                         required=True)
+    parser.add_argument('--queue', help='the amqp queue name to publish on',
+                        default='sparkhara')
     args = parser.parse_args()
 
     while True:
@@ -31,7 +33,7 @@ def main():
         print('connection from: {}'.format(send_addr))
         try:
             conn = kombu.Connection(args.url)
-            queue = conn.SimpleQueue('sparkhara')
+            queue = conn.SimpleQueue(args.queue)
             while True:
                 try:
                     message = queue.get(block=False, timeout=1)

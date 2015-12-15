@@ -15,6 +15,8 @@ def main():
                         required=True)
     parser.add_argument('--tail', help='only send new lines appended to file',
                         action='store_true')
+    parser.add_argument('--queue', help='the amqp queue name to publish on',
+                        default='sparkhara')
     args = parser.parse_args()
 
     logfile = open(args.file, 'r')
@@ -22,7 +24,7 @@ def main():
         logfile.seek(0, os.SEEK_END)
 
     conn = kombu.Connection(args.url)
-    queue = conn.SimpleQueue('sparkhara')
+    queue = conn.SimpleQueue(args.queue)
 
     done = False
     while not done:
