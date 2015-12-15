@@ -11,10 +11,11 @@ import requests
 
 
 def signal_rest_server(rawdata, rest_url):
-    data = {'id': rawdata['_id'],
-            'count': rawdata['count'],
-            }
-    requests.post(rest_url, json=data)
+    if rawdata.get('count', 0) > 0:
+        data = {'id': rawdata['_id'],
+                'count': rawdata['count'],
+                }
+        requests.post(rest_url, json=data)
 
 
 def store_packets(data, mongo_url):
