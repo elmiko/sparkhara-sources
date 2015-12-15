@@ -11,21 +11,19 @@ import requests
 
 
 def signal_rest_server(rawdata, rest_url):
-    if rawdata.get('count', 0) > 0:
-        data = {'id': rawdata['_id'],
-                'count': rawdata['count'],
-                }
-        requests.post(rest_url, json=data)
+    data = {'id': rawdata['_id'],
+            'count': rawdata['count'],
+            }
+    requests.post(rest_url, json=data)
 
 
 def store_packets(data, mongo_url):
-    if data['count'] != 0:
-        db = pymongo.MongoClient(mongo_url).sparkhara.count_packets
-        db.insert_one(data)
+    db = pymongo.MongoClient(mongo_url).sparkhara.count_packets
+    db.insert_one(data)
 
 
 def normalize_log_lines(log_lines, service_name=None):
-    data = {'_id': None if len(log_lines) == 0 else uuid.uuid4().hex,
+    data = {'_id': uuid.uuid4().hex,
             'count': len(log_lines),
             'logs': log_lines,
             }
@@ -35,11 +33,12 @@ def normalize_log_lines(log_lines, service_name=None):
 def process_generic(rdd, mongo_url, rest_url):
     log_lines = rdd.collect()
     print(len(log_lines), "processed")
-    data = normalize_log_lines(log_lines)
-    data['processed-at'] = datetime.datetime.now().strftime(
-        '%Y-%m-%d %H:%M:%S.%f')[:-3]
-    store_packets(data, mongo_url)
-    signal_rest_server(data, rest_url)
+    if len(log_lines) > 0:
+        data = normalize_log_lines(log_lines)
+        data['processed-at'] = datetime.datetime.now().strftime(
+            '%Y-%m-%d %H:%M:%S.%f')[:-3]
+        store_packets(data, mongo_url)
+        signal_rest_server(data, rest_url)
 
 
 def main():
