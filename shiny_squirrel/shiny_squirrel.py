@@ -9,45 +9,49 @@ import pymongo
 app = f.Flask(__name__)
 
 _mongourl = None
-_logtotals = None
-_countpackets = None
 
 LOG_ALL = 'all'
 LOG_UNKNOWN = 'unknown'
 
 
-def logtotals():
-    global _logtotals
-    if _logtotals is None:
-        _logtotals = LogTotals()
-    return _logtotals
+class Singleton(object):
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(Singleton, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+
+    @property
+    def initialized(self):
+        return hasattr(self, '_initialized')
+
+    @staticmethod
+    def check_initialized(func):
+        def wrapper(self, *args, **kwargs):
+            if not self.initialized:
+                retval = func(self, *args, **kwargs)
+                self._initialized = True
+                return retval
+        return wrapper
 
 
-def countpackets():
-    global _countpackets
-    if _countpackets is None:
-        _countpackets = CountPackets()
-    return _countpackets
+class LogTotals(Singleton):
+    class TotalCounter(object):
+        def __init__(self, initial_value=0):
+            self.value = initial_value
+            self.last_value = initial_value
 
+        def add(self, count):
+            self.last_value = self.value
+            self.value += int(count)
 
-class TotalCounter(object):
-    def __init__(self, initial_value=0):
-        self.value = initial_value
-        self.last_value = initial_value
+        def update(self, new_value):
+            self.value = new_value
 
-    def add(self, count):
-        self.last_value = self.value
-        self.value += int(count)
-
-    def update(self, new_value):
-        self.value = new_value
-
-
-class LogTotals(object):
+    @Singleton.check_initialized
     def __init__(self):
         self.log_totals = {
-            LOG_ALL: TotalCounter(),
-            LOG_UNKNOWN: TotalCounter(),
+            LOG_ALL: LogTotals.TotalCounter(),
+            LOG_UNKNOWN: LogTotals.TotalCounter(),
             }
 
     def get(self, log):
@@ -59,7 +63,7 @@ class LogTotals(object):
 
     def add(self, log, count):
         if log not in self.log_totals:
-            self.log_totals[log] = TotalCounter()
+            self.log_totals[log] = LogTotals.TotalCounter()
         self.log_totals[log].add(count)
         if log != LOG_ALL:
             self.log_totals[LOG_ALL].add(count)
@@ -70,7 +74,8 @@ class LogTotals(object):
                 v.update(new_totals[k])
 
 
-class CountPackets(object):
+class CountPackets(Singleton):
+    @Singleton.check_initialized
     def __init__(self):
         self.flush()
         self.last_packet = {
@@ -128,14 +133,14 @@ def count_packets():
         print('received some data')
         print(data)
         data['service'] = data.get('service') or LOG_UNKNOWN
-        countpackets().update_from_dict(data)
-        logtotals().add(data.get('service'), data.get('count'))
+        CountPackets().update_from_dict(data)
+        LogTotals().add(data.get('service'), data.get('count'))
         status = 201
         ret = ''
     else:
         status = 200
-        ret = f.jsonify(countpackets().to_dict())
-        countpackets().flush()
+        ret = f.jsonify(CountPackets().to_dict())
+        CountPackets().flush()
     return ret, status
 
 
@@ -178,7 +183,7 @@ def sorted_logs():
 
 @app.route('/totals')
 def totals():
-    return f.jsonify(logtotals().to_dict())
+    return f.jsonify(LogTotals().to_dict())
 
 
 if __name__ == '__main__':
