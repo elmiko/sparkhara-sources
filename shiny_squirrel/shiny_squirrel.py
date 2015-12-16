@@ -151,20 +151,23 @@ class SortedLogsView(views.MethodView):
         ids = f.request.args.getlist('ids')
         print(ids)
         logs = []
-        db = pymongo.MongoClient(_mongourl).sparkhara.count_packets
+        db = pymongo.MongoClient(_mongourl).sparkhara
         for i in ids:
-            packet = db.find_one(i)
+            packet = db.count_packets.find_one(i)
             if packet:
-                logs += packet.get('logs')
+                for li in packet.get('log-ids'):
+                    log = db.log_packets.find_one(li)
+                    if log:
+                        logs.append(log['log'])
 
         def log_sort(a, b):
             print(a)
             print(b)
             try:
-                date1 = datetime.datetime.strptime(a.split('::')[0],
-                                                   '%Y-%m-%d %H:%M:%S.%f')
-                date2 = datetime.datetime.strptime(b.split('::')[0],
-                                                   '%Y-%m-%d %H:%M:%S.%f')
+                date1 = datetime.datetime.strptime(
+                    a.split('::')[0], '%Y-%m-%d %H:%M:%S.%f')
+                date2 = datetime.datetime.strptime(
+                    b.split('::')[0], '%Y-%m-%d %H:%M:%S.%f')
             except ValueError:
                 return 0
             return cmp(date1, date2)

@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import json
 import sys
 import uuid
 
@@ -20,15 +21,31 @@ def signal_rest_server(rawdata, rest_url):
         print('handled: {}'.format(ex))
 
 
-def store_packets(data, mongo_url):
-    db = pymongo.MongoClient(mongo_url).sparkhara.count_packets
-    db.insert_one(data)
+def store_packets(rawdata, mongo_url):
+    data = {'_id': rawdata['_id'],
+            'processed-at': rawdata['processed-at'],
+            'count': rawdata['count'],
+            'log-ids': rawdata['log-ids'],
+            }
+    db = pymongo.MongoClient(mongo_url).sparkhara
+    db.count_packets.insert_one(data)
+    data = rawdata['log-packets']
+    db.log_packets.insert_many(data, ordered=False)
 
 
 def normalize_log_lines(log_lines, service_name=None):
+    norm_log_lines = []
+    for line in log_lines:
+        for k, v in json.loads(line).items():
+            repack = {'_id': uuid.uuid4().hex,
+                      'service': k,
+                      'log': v,
+                      }
+            norm_log_lines.append(repack)
     data = {'_id': uuid.uuid4().hex,
-            'count': len(log_lines),
-            'logs': log_lines,
+            'count': len(norm_log_lines),
+            'log-ids': [l['_id'] for l in norm_log_lines],
+            'log-packets': norm_log_lines,
             }
     return data
 
