@@ -1,0 +1,17 @@
+kind: ReplicationController
+apiVersion: v1
+metadata:
+  name: caravan-pathfinder-controller
+spec:
+  replicas: 1
+  selector:
+    component: caravan-pathfinder
+  template:
+    metadata:
+      labels:
+        component: caravan-pathfinder
+    spec:
+      containers:
+        - name: caravan-pathfinder
+          image: 172.30.122.181:5000/uber/caravan_pathfinder:latest
+          args: ["amqp://10.19.20.5/"]

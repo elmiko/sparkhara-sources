@@ -1,0 +1,10 @@
+FROM fedora
+
+RUN dnf install -y python-kombu && \
+    dnf clean all
+
+ADD caravan_pathfinder.py /
+
+EXPOSE 1984
+
+ENTRYPOINT ["/caravan_pathfinder.py", "--url"]

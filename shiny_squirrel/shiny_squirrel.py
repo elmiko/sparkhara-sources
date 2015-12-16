@@ -1,51 +1,58 @@
+import argparse
 import copy
 import datetime
 
 import flask as f
+from flask import views
 import pymongo
 
 
 app = f.Flask(__name__)
 
-_logtotals = None
-_countpackets = None
+_mongourl = None
 
 LOG_ALL = 'all'
 LOG_UNKNOWN = 'unknown'
 
 
-def logtotals():
-    global _logtotals
-    if _logtotals is None:
-        _logtotals = LogTotals()
-    return _logtotals
+class Singleton(object):
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(Singleton, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+
+    @property
+    def initialized(self):
+        return hasattr(self, '_initialized')
+
+    @staticmethod
+    def check_initialized(func):
+        def wrapper(self, *args, **kwargs):
+            if not self.initialized:
+                retval = func(self, *args, **kwargs)
+                self._initialized = True
+                return retval
+        return wrapper
 
 
-def countpackets():
-    global _countpackets
-    if _countpackets is None:
-        _countpackets = CountPackets()
-    return _countpackets
+class LogTotals(Singleton):
+    class TotalCounter(object):
+        def __init__(self, initial_value=0):
+            self.value = initial_value
+            self.last_value = initial_value
 
+        def add(self, count):
+            self.last_value = self.value
+            self.value += int(count)
 
-class TotalCounter(object):
-    def __init__(self, initial_value=0):
-        self.value = initial_value
-        self.last_value = initial_value
+        def update(self, new_value):
+            self.value = new_value
 
-    def add(self, count):
-        self.last_value = self.value
-        self.value += int(count)
-
-    def update(self, new_value):
-        self.value = new_value
-
-
-class LogTotals(object):
+    @Singleton.check_initialized
     def __init__(self):
         self.log_totals = {
-            LOG_ALL: TotalCounter(),
-            LOG_UNKNOWN: TotalCounter(),
+            LOG_ALL: LogTotals.TotalCounter(),
+            LOG_UNKNOWN: LogTotals.TotalCounter(),
             }
 
     def get(self, log):
@@ -57,7 +64,7 @@ class LogTotals(object):
 
     def add(self, log, count):
         if log not in self.log_totals:
-            self.log_totals[log] = TotalCounter()
+            self.log_totals[log] = LogTotals.TotalCounter()
         self.log_totals[log].add(count)
         if log != LOG_ALL:
             self.log_totals[LOG_ALL].add(count)
@@ -68,7 +75,8 @@ class LogTotals(object):
                 v.update(new_totals[k])
 
 
-class CountPackets(object):
+class CountPackets(Singleton):
+    @Singleton.check_initialized
     def __init__(self):
         self.flush()
         self.last_packet = {
@@ -93,7 +101,7 @@ class CountPackets(object):
             }
 
     def update_from_dict(self, new_packet):
-        if new_packet.get('service') not in self.since_last_get['by-service']:
+        if new_packet['service'] not in self.since_last_get['by-service']:
             self.since_last_get['by-service'][new_packet['service']] = {
                     'ids': [],
                     'count': 0,
@@ -112,70 +120,78 @@ class CountPackets(object):
             self.since_last_get['by-service'][new_packet['service']]['errors'] = True
 
 
-@app.route('/')
-def index():
-    return f.render_template('index.html')
+class IndexView(views.MethodView):
+    def get(self):
+        return f.render_template('index.html')
 
 
-@app.route('/count-packets', methods=['GET', 'POST'])
-def count_packets():
-    if f.request.method == 'POST':
+class CountPacketsView(views.MethodView):
+    def get(self):
+        status = 200
+        ret = f.jsonify(CountPackets().to_dict())
+        CountPackets().flush()
+        return ret, status
+
+    def post(self):
         data = f.request.get_json()
         if not data:
             return f.jsonify(message='no data found'), 400
-        countpackets().update_from_dict(data)
-        logtotals().add(data.get('service', LOG_UNKNOWN), data.get('count'))
+        print('received some data')
+        print(data)
+        data['service'] = data.get('service') or LOG_UNKNOWN
+        CountPackets().update_from_dict(data)
+        LogTotals().add(data.get('service'), data.get('count'))
         status = 201
         ret = ''
-    else:
-        status = 200
-        ret = f.jsonify(countpackets().to_dict())
-        countpackets().flush()
-    return ret, status
+        return ret, status
 
 
-@app.route('/count-packets/<packet_id>', methods=['GET'])
-def packet_detail(packet_id):
-    db = pymongo.MongoClient('10.0.1.107').sparkhara.count_packets
-    packet = db.find_one(packet_id)
-    if packet is None:
-        return f.jsonify(message='packet not found'), 404
-    ret = {'count-packet': {'id': packet_id, 'logs': packet.get('logs')}}
-    return f.jsonify(ret)
+class SortedLogsView(views.MethodView):
+    def get(self):
+        ids = f.request.args.getlist('ids')
+        print(ids)
+        logs = []
+        db = pymongo.MongoClient(_mongourl).sparkhara.count_packets
+        for i in ids:
+            packet = db.find_one(i)
+            if packet:
+                logs += packet.get('logs')
+
+        def log_sort(a, b):
+            print(a)
+            print(b)
+            try:
+                date1 = datetime.datetime.strptime(a.split('::')[0],
+                                                   '%Y-%m-%d %H:%M:%S.%f')
+                date2 = datetime.datetime.strptime(b.split('::')[0],
+                                                   '%Y-%m-%d %H:%M:%S.%f')
+            except ValueError:
+                return 0
+            return cmp(date1, date2)
+
+        ret = {'sorted-logs': {'lines': sorted(logs, log_sort)}}
+        return f.jsonify(ret), 200
 
 
-@app.route('/sorted-logs')
-def sorted_logs():
-    ids = f.request.args.getlist('ids')
-    print(ids)
-    logs = []
-    db = pymongo.MongoClient('10.0.1.107').sparkhara.count_packets
-    for i in ids:
-        packet = db.find_one(i)
-        if packet:
-            logs += packet.get('logs')
-
-    def log_sort(a, b):
-        print(a)
-        print(b)
-        try:
-            date1 = datetime.datetime.strptime(a.split('::')[0],
-                                               '%Y-%m-%d %H:%M:%S.%f')
-            date2 = datetime.datetime.strptime(b.split('::')[0],
-                                               '%Y-%m-%d %H:%M:%S.%f')
-        except ValueError:
-            return 0
-        return cmp(date1, date2)
-
-    ret = {'sorted-logs': {'lines': sorted(logs, log_sort)}}
-    return f.jsonify(ret), 200
-
-
-@app.route('/totals')
-def totals():
-    return f.jsonify(logtotals().to_dict())
+class LogTotalsView(views.MethodView):
+    def get(self):
+        return f.jsonify(LogTotals().to_dict())
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='run the shiny squirrel server')
+    parser.add_argument('--mongo', help='the mongodb url',
+                        required=True)
+    args = parser.parse_args()
+    _mongourl = args.mongo
+    print('MongoDB at {}'.format(_mongourl))
+
     app.debug = True
+    app.add_url_rule('/', view_func=IndexView.as_view('index'))
+    app.add_url_rule('/totals', view_func=LogTotalsView.as_view('totals'))
+    app.add_url_rule('/count-packets',
+                     view_func=CountPacketsView.as_view('countpackets'))
+    app.add_url_rule('/sorted-logs',
+                     view_func=SortedLogsView.as_view('sortedlogs'))
     app.run(host='0.0.0.0', port=9050)

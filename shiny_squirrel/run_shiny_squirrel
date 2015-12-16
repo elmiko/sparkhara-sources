@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+
+[ -z "$1" ] && echo "MONGODB SERVICE NAME not provided" && exit
+
+echo "args provided: $*"
+
+MONGO_USER=$(cat /etc/mongo-secret/username)
+MONGO_PASS=$(cat /etc/mongo-secret/password)
+
+/usr/bin/python \
+    /opt/shiny_squirrel/shiny_squirrel.py --mongo mongodb://${MONGO_USER}:${MONGO_PASS}@$1/sparkhara

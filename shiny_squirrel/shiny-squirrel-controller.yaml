@@ -1,0 +1,25 @@
+kind: ReplicationController
+apiVersion: v1
+metadata:
+  name: shiny-squirrel-controller
+spec:
+  replicas: 1
+  selector:
+    component: shiny-squirrel
+  template:
+    metadata:
+      labels:
+        component: shiny-squirrel
+    spec:
+      volumes:
+        - name: mongo-secret-volume
+          secret:
+            secretName: mongo-secret
+      containers:
+        - name: shiny-squirrel
+          image: 172.30.122.181:5000/uber/shiny_squirrel:latest
+          args: ["mongodb"]
+          volumeMounts:
+            - name: mongo-secret-volume
+              mountPath: /etc/mongo-secret
+              readOnly: true
