@@ -3,6 +3,7 @@ import copy
 import datetime
 
 import flask as f
+from flask import views
 import pymongo
 
 
@@ -119,14 +120,19 @@ class CountPackets(Singleton):
             self.since_last_get['by-service'][new_packet['service']]['errors'] = True
 
 
-@app.route('/')
-def index():
-    return f.render_template('index.html')
+class IndexView(views.MethodView):
+    def get(self):
+        return f.render_template('index.html')
 
 
-@app.route('/count-packets', methods=['GET', 'POST'])
-def count_packets():
-    if f.request.method == 'POST':
+class CountPacketsView(views.MethodView):
+    def get(self):
+        status = 200
+        ret = f.jsonify(CountPackets().to_dict())
+        CountPackets().flush()
+        return ret, status
+
+    def post(self):
         data = f.request.get_json()
         if not data:
             return f.jsonify(message='no data found'), 400
@@ -137,53 +143,39 @@ def count_packets():
         LogTotals().add(data.get('service'), data.get('count'))
         status = 201
         ret = ''
-    else:
-        status = 200
-        ret = f.jsonify(CountPackets().to_dict())
-        CountPackets().flush()
-    return ret, status
+        return ret, status
 
 
-@app.route('/count-packets/<packet_id>', methods=['GET'])
-def packet_detail(packet_id):
-    db = pymongo.MongoClient(_mongourl).sparkhara.count_packets
-    packet = db.find_one(packet_id)
-    if packet is None:
-        return f.jsonify(message='packet not found'), 404
-    ret = {'count-packet': {'id': packet_id, 'logs': packet.get('logs')}}
-    return f.jsonify(ret)
+class SortedLogsView(views.MethodView):
+    def get(self):
+        ids = f.request.args.getlist('ids')
+        print(ids)
+        logs = []
+        db = pymongo.MongoClient(_mongourl).sparkhara.count_packets
+        for i in ids:
+            packet = db.find_one(i)
+            if packet:
+                logs += packet.get('logs')
+
+        def log_sort(a, b):
+            print(a)
+            print(b)
+            try:
+                date1 = datetime.datetime.strptime(a.split('::')[0],
+                                                   '%Y-%m-%d %H:%M:%S.%f')
+                date2 = datetime.datetime.strptime(b.split('::')[0],
+                                                   '%Y-%m-%d %H:%M:%S.%f')
+            except ValueError:
+                return 0
+            return cmp(date1, date2)
+
+        ret = {'sorted-logs': {'lines': sorted(logs, log_sort)}}
+        return f.jsonify(ret), 200
 
 
-@app.route('/sorted-logs')
-def sorted_logs():
-    ids = f.request.args.getlist('ids')
-    print(ids)
-    logs = []
-    db = pymongo.MongoClient(_mongourl).sparkhara.count_packets
-    for i in ids:
-        packet = db.find_one(i)
-        if packet:
-            logs += packet.get('logs')
-
-    def log_sort(a, b):
-        print(a)
-        print(b)
-        try:
-            date1 = datetime.datetime.strptime(a.split('::')[0],
-                                               '%Y-%m-%d %H:%M:%S.%f')
-            date2 = datetime.datetime.strptime(b.split('::')[0],
-                                               '%Y-%m-%d %H:%M:%S.%f')
-        except ValueError:
-            return 0
-        return cmp(date1, date2)
-
-    ret = {'sorted-logs': {'lines': sorted(logs, log_sort)}}
-    return f.jsonify(ret), 200
-
-
-@app.route('/totals')
-def totals():
-    return f.jsonify(LogTotals().to_dict())
+class LogTotalsView(views.MethodView):
+    def get(self):
+        return f.jsonify(LogTotals().to_dict())
 
 
 if __name__ == '__main__':
@@ -196,4 +188,10 @@ if __name__ == '__main__':
     print('MongoDB at {}'.format(_mongourl))
 
     app.debug = True
+    app.add_url_rule('/', view_func=IndexView.as_view('index'))
+    app.add_url_rule('/totals', view_func=LogTotalsView.as_view('totals'))
+    app.add_url_rule('/count-packets',
+                     view_func=CountPacketsView.as_view('countpackets'))
+    app.add_url_rule('/sorted-logs',
+                     view_func=SortedLogsView.as_view('sortedlogs'))
     app.run(host='0.0.0.0', port=9050)
