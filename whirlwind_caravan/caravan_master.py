@@ -14,7 +14,10 @@ def signal_rest_server(rawdata, rest_url):
     data = {'id': rawdata['_id'],
             'count': rawdata['count'],
             }
-    requests.post(rest_url, json=data)
+    try:
+        requests.post(rest_url, json=data)
+    except Exception as ex:
+        print('handled: {}'.format(ex))
 
 
 def store_packets(data, mongo_url):
