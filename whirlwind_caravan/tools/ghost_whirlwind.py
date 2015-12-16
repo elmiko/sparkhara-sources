@@ -7,7 +7,7 @@ messages as they occurred. meaning that it will read the date stamp from each
 log line and attempt to calculcate the time difference and sleep between
 sends. it will send the lines to a port specified on the command line.
 
-this is intended to help feed the caravan master in cases where no zaqar
+this is intended to help feed the caravan master in cases where no
 queue is present, or no services are available to provide live logs.
 
 '''

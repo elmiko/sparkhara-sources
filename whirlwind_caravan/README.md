@@ -11,8 +11,7 @@ the applications here are:
 
 ## data whirlwind
 
-read a log file and send it line by line over the openstack queue
-service(zaqar).
+read a log file and send it line by line over an amqp message broker.
 
 ## caravan pathfinder
 
