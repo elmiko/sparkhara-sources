@@ -46,6 +46,8 @@ def main():
                 s += send.send('\n')
                 print('sent {} bytes'.format(s))
                 message.ack()
+        except socket.error:
+            pass
         finally:
             send.close()
             pass
