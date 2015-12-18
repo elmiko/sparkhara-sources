@@ -24,7 +24,7 @@ def main():
                         default=1984)
     parser.add_argument('--url', help='the amqp broker url',
                         required=True)
-    parser.add_argument('--queue', help='the amqp queue name to publish on',
+    parser.add_argument('--queue', help='the amqp queue name to subscribe',
                         default='sparkhara')
     args = parser.parse_args()
 
