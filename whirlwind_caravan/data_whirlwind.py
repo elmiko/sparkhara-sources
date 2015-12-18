@@ -15,7 +15,8 @@ def main():
                         required=True)
     parser.add_argument('--tail', help='only send new lines appended to file',
                         action='store_true')
-    parser.add_argument('--queue', help='the amqp queue name to publish on',
+    parser.add_argument('--queue', help='the amqp queue name to publish on '
+                        '(default: sparkhara)',
                         default='sparkhara')
     args = parser.parse_args()
 

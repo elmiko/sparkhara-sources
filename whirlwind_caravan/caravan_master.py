@@ -73,14 +73,17 @@ def main():
                         required=True)
     parser.add_argument('--rest', help='the rest endpoint to signal',
                         required=True)
-    parser.add_argument('--port', help='the port to receive from',
+    parser.add_argument('--port', help='the port to receive from '
+                        '(default: 1984)',
                         default=1984, type=int)
-    parser.add_argument('--appname', help='the name of the spark application',
+    parser.add_argument('--appname', help='the name of the spark application '
+                        '(default: SparkharaLogCounter)',
                         default='SparkharaLogCounter')
     parser.add_argument('--master',
                         help='the master url for the spark cluster')
     parser.add_argument('--socket',
-                        help='the socket to attach for streaming text data',
+                        help='the socket to attach for streaming text data '
+                        '(default: caravan-pathfinder)',
                         default='caravan-pathfinder')
     args = parser.parse_args()
     mongo_url = args.mongo
