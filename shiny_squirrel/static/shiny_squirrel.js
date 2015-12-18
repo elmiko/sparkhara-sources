@@ -53,9 +53,7 @@ function get_count() {
   count_list.forEach(function (item, idx, arr) {
       var p = Object();
       p.pos = idx;
-      p.count = +item.count;
       p.total_count = +item.total_count;
-      p.packet_id = item.packet_id;
       p.packet_ids = item.packet_ids;
       p.errors = item.errors;
       data.push(p);
@@ -70,14 +68,11 @@ function get_count_for_service(service) {
   count_list.forEach(function (item, idx, arr) {
     var p = Object();
     p.pos = idx;
+    p.count = +0;
     if ("services" in item) {
-      p.count = +item.services[service].count;
-      p.packet_ids = item.services[service].ids;
-      p.errors = item.services[service].errors;
-    } else {
-      p.count = +0;
-      p.packet_ids = [];
-      p.errors = false;
+      if (service in item.services) {
+        p.count = +item.services[service];
+      }
     }
     data.push(p)
   });
@@ -172,8 +167,7 @@ function update_line_and_circles() {
             .attr("transform", circle_transform(item))
             .attr("class", "circle")
             .attr("d", d3.svg.symbol().size(40))
-            .style("fill", colors[idx])
-            .on("click", packet_click);
+            .style("fill", colors[idx]);
     });
   });
 }
@@ -186,13 +180,15 @@ setInterval(function() {
       if (error) throw error;
 
       var p = Object();
-      p.count = data["count-packets"]["last-received"].count;
-      p.packet_id = data["count-packets"]["last-received"].id;
       p.total_count = data["count-packets"]["since-last-get"].count;
       p.packet_ids = data["count-packets"]["since-last-get"].ids;
       p.errors = data["count-packets"]["since-last-get"].errors;
-      p.services = data["count-packets"]["since-last-get"]["by-service"];
-      service_list = Object.keys(p.services);
+      p.services = data["count-packets"]["since-last-get"]["service-counts"];
+      Object.keys(p.services).forEach(function (item) {
+        if (service_list.indexOf(item) === -1) {
+          service_list.push(item);
+        }
+      });
 
       count_list.unshift(p);
       if (count_list.length >= 60) {

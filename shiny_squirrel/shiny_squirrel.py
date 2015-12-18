@@ -81,15 +81,16 @@ class CountPackets(Singleton):
         self.flush()
         self.last_packet = {
             'id': None,
-            'count': 0
+            'count': 0,
+            'service-counts': {},
             }
 
     def flush(self):
         self.since_last_get = {
             'ids': [],
             'count': 0,
+            'service-counts': {},
             'errors': False,
-            'by-service': {},
             }
 
     def to_dict(self):
@@ -101,23 +102,32 @@ class CountPackets(Singleton):
             }
 
     def update_from_dict(self, new_packet):
-        if new_packet['service'] not in self.since_last_get['by-service']:
-            self.since_last_get['by-service'][new_packet['service']] = {
-                    'ids': [],
-                    'count': 0,
-                    'errors': False,
-                    }
-        self.last_packet['id'] = new_packet.get('id')
+        ''' update the count packets
+
+        expecting something like this:
+
+        {
+          'id': '<id of the packet>',
+          'count': int(<number of lines in this packet>),
+          'service-counts': { '<service>': int(<count of lines>) }
+        }
+
+        '''
+        if new_packet.get('id') is None:
+            raise Exception('count packet contains no id')
+
+        self.last_packet['id'] = new_packet['id']
         self.last_packet['count'] = int(new_packet.get('count', 0))
-        self.since_last_get['count'] += int(new_packet.get('count', 0))
-        self.since_last_get['by-service'][new_packet['service']]['count'] += int(new_packet.get('count', 0))
-        if new_packet.get('id') is not None:
-            self.since_last_get['ids'].append(new_packet.get('id'))
-            self.since_last_get['by-service'][new_packet['service']]['ids'].append(
-                new_packet.get('id'))
-        if new_packet.get('errors') is True:
-            self.since_last_get['errors'] = True
-            self.since_last_get['by-service'][new_packet['service']]['errors'] = True
+        self.last_packet['service-counts'] = copy.deepcopy(
+            new_packet.get('service-counts', {}))
+
+        self.since_last_get['ids'].append(self.last_packet['id'])
+        self.since_last_get['count'] += self.last_packet['count']
+        for service, count in self.last_packet['service-counts'].items():
+            self.since_last_get['service-counts'][service] = (
+                self.since_last_get['service-counts'].get(service, 0)
+                + int(count))
+
 
 
 class IndexView(views.MethodView):
@@ -138,9 +148,7 @@ class CountPacketsView(views.MethodView):
             return f.jsonify(message='no data found'), 400
         print('received some data')
         print(data)
-        data['service'] = data.get('service') or LOG_UNKNOWN
         CountPackets().update_from_dict(data)
-        LogTotals().add(data.get('service'), data.get('count'))
         status = 201
         ret = ''
         return ret, status

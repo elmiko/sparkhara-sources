@@ -14,6 +14,7 @@ import requests
 def signal_rest_server(rawdata, rest_url):
     data = {'id': rawdata['_id'],
             'count': rawdata['count'],
+            'service-counts': rawdata['service-counts'],
             }
     try:
         requests.post(rest_url, json=data)
@@ -35,6 +36,7 @@ def store_packets(rawdata, mongo_url):
 
 def normalize_log_lines(log_lines, service_name=None):
     norm_log_lines = []
+    service_counts = {}
     for line in log_lines:
         for k, v in json.loads(line).items():
             repack = {'_id': uuid.uuid4().hex,
@@ -42,10 +44,12 @@ def normalize_log_lines(log_lines, service_name=None):
                       'log': v,
                       }
             norm_log_lines.append(repack)
+            service_counts[k] = service_counts.get(k, 0) + 1
     data = {'_id': uuid.uuid4().hex,
             'count': len(norm_log_lines),
             'log-ids': [l['_id'] for l in norm_log_lines],
             'log-packets': norm_log_lines,
+            'service-counts': service_counts,
             }
     return data
 
