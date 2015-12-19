@@ -25,7 +25,7 @@ def main():
         logfile.seek(0, os.SEEK_END)
 
     conn = kombu.Connection(args.url)
-    queue = conn.SimpleQueue(args.queue)
+    producer = kombu.Producer(conn)
 
     done = False
     while not done:
@@ -34,7 +34,7 @@ def main():
         pos2 = logfile.tell()
         if pos1 != pos2:
             message = {args.name: l}
-            queue.put(message)
+            producer.publish(message, routing_key=args.queue, expiration=60)
             print('sent: {}'.format(message))
         else:
             time.sleep(1)
