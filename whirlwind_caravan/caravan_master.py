@@ -45,8 +45,9 @@ def repack(line):
 def normalize_log_lines(log_lines, service_name=None):
     norm_log_lines = []
     service_counts = {}
-    for line in log_lines:
-        line = repack(line)
+
+    lines = map(repack, log_lines)
+    for line in lines:
         service = line['service']
         norm_log_lines.append(line)
         service_counts[service] = service_counts.get(service, 0) + 1
