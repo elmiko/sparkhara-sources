@@ -52,9 +52,7 @@ def process_generic(rdd, mongo_url, rest_url):
 
     print "processing", count, "entries"
 
-    log_lines = rdd.collect()
-
-    norm_log_lines = map(repack, log_lines)
+    norm_log_lines = rdd.map(repack).collect()
 
     for line in norm_log_lines:
         service_counts[line['service']] += 1
