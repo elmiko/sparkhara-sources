@@ -44,7 +44,8 @@ def repack(line):
 
 
 def process_generic(rdd, mongo_url, rest_url):
-    if rdd.count() is 0:
+    count = rdd.count()
+    if count is 0:
         return
 
     service_counts = defaultdict(lambda: 0)
@@ -58,7 +59,6 @@ def process_generic(rdd, mongo_url, rest_url):
         service_counts[line['service']] += 1
 
     id = uuid.uuid4().hex
-    count = len(norm_log_lines)
 
     store_packets(id,
                   count,
