@@ -34,17 +34,22 @@ def store_packets(rawdata, mongo_url):
     db.log_packets.insert_many(data, ordered=False)
 
 
+def repack(line):
+    (service, log) = json.loads(line).items()[0]
+
+    return  {'_id': uuid.uuid4().hex,
+             'service': service,
+             'log': log}
+
+
 def normalize_log_lines(log_lines, service_name=None):
     norm_log_lines = []
     service_counts = {}
     for line in log_lines:
-        for k, v in json.loads(line).items():
-            repack = {'_id': uuid.uuid4().hex,
-                      'service': k,
-                      'log': v,
-                      }
-            norm_log_lines.append(repack)
-            service_counts[k] = service_counts.get(k, 0) + 1
+        line = repack(line)
+        service = line['service']
+        norm_log_lines.append(line)
+        service_counts[service] = service_counts.get(service, 0) + 1
     data = {'_id': uuid.uuid4().hex,
             'count': len(norm_log_lines),
             'log-ids': [l['_id'] for l in norm_log_lines],
