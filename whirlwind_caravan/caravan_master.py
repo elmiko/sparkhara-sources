@@ -10,7 +10,7 @@ from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
 import requests
 
-from collections import defaultdict
+from operator import add
 
 
 def signal_rest_server(id, count, service_counts, rest_url):
@@ -48,8 +48,6 @@ def process_generic(rdd, mongo_url, rest_url):
     if count is 0:
         return
 
-    service_counts = defaultdict(lambda: 0)
-
     print "processing", count, "entries"
 
     normalized_rdd = rdd.map(repack)
@@ -58,8 +56,7 @@ def process_generic(rdd, mongo_url, rest_url):
 
     ids = normalized_rdd.map(lambda e: e['_id']).collect()
 
-    for line in norm_log_lines:
-        service_counts[line['service']] += 1
+    service_counts = dict(normalized_rdd.map(lambda e: (e['service'], 1)).reduceByKey(add).collect())
 
     id = uuid.uuid4().hex
 
