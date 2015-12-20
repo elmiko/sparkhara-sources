@@ -10,6 +10,8 @@ from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
 import requests
 
+from collections import defaultdict
+
 
 def signal_rest_server(rawdata, rest_url):
     data = {'id': rawdata['_id'],
@@ -43,12 +45,11 @@ def repack(line):
 
 
 def normalize_log_lines(log_lines, service_name=None):
-    service_counts = {}
+    service_counts = defaultdict(lambda: 0)
 
     norm_log_lines = map(repack, log_lines)
     for line in norm_log_lines:
-        service = line['service']
-        service_counts[service] = service_counts.get(service, 0) + 1
+        service_counts[line['service']] += 1
     data = {'_id': uuid.uuid4().hex,
             'count': len(norm_log_lines),
             'log-ids': [l['_id'] for l in norm_log_lines],
