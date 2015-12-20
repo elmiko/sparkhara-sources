@@ -44,26 +44,20 @@ def repack(line):
              'log': log}
 
 
-def normalize_log_lines(log_lines, service_name=None):
-    service_counts = defaultdict(lambda: 0)
-
-    norm_log_lines = map(repack, log_lines)
-    for line in norm_log_lines:
-        service_counts[line['service']] += 1
-    data = {'_id': uuid.uuid4().hex,
-            'count': len(norm_log_lines),
-            'log-ids': [l['_id'] for l in norm_log_lines],
-            'log-packets': norm_log_lines,
-            'service-counts': service_counts,
-            }
-    return data
-
-
 def process_generic(rdd, mongo_url, rest_url):
     log_lines = rdd.collect()
     print(len(log_lines), "processed")
     if len(log_lines) > 0:
-        data = normalize_log_lines(log_lines)
+        service_counts = defaultdict(lambda: 0)
+        norm_log_lines = map(repack, log_lines)
+        for line in norm_log_lines:
+            service_counts[line['service']] += 1
+        data = {'_id': uuid.uuid4().hex,
+                'count': len(norm_log_lines),
+                'log-ids': [l['_id'] for l in norm_log_lines],
+                'log-packets': norm_log_lines,
+                'service-counts': service_counts
+        }
         data['processed-at'] = datetime.datetime.now().strftime(
             '%Y-%m-%d %H:%M:%S.%f')[:-3]
         store_packets(data['_id'],
