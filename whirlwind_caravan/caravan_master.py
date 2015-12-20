@@ -54,8 +54,6 @@ def process_generic(rdd, mongo_url, rest_url):
 
     ids = normalized_rdd.map(lambda e: e['_id']).collect()
 
-    service_counts = dict(normalized_rdd.map(lambda e: (e['service'], 1)).reduceByKey(add).collect())
-
     id = uuid.uuid4().hex
 
     store_packets(id,
@@ -66,7 +64,8 @@ def process_generic(rdd, mongo_url, rest_url):
 
     signal_rest_server(id,
                        count,
-                       service_counts,
+                       dict(normalized_rdd.map(
+                           lambda e: (e['service'], 1)).reduceByKey(add).collect()),
                        rest_url)
 
 def main():
