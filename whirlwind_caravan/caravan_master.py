@@ -13,10 +13,10 @@ import requests
 from collections import defaultdict
 
 
-def signal_rest_server(rawdata, rest_url):
-    data = {'id': rawdata['_id'],
-            'count': rawdata['count'],
-            'service-counts': rawdata['service-counts'],
+def signal_rest_server(id, count, service_counts, rest_url):
+    data = {'id': id,
+            'count': count,
+            'service-counts': service_counts,
             }
     try:
         requests.post(rest_url, json=data)
@@ -67,8 +67,10 @@ def process_generic(rdd, mongo_url, rest_url):
         data['processed-at'] = datetime.datetime.now().strftime(
             '%Y-%m-%d %H:%M:%S.%f')[:-3]
         store_packets(data, mongo_url)
-        signal_rest_server(data, rest_url)
-
+        signal_rest_server(data['_id'],
+                           data['count'],
+                           data['service-counts'],
+                           rest_url)
 
 def main():
     parser = argparse.ArgumentParser(
