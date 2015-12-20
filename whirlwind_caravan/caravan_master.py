@@ -49,9 +49,10 @@ def process_generic(rdd, mongo_url, rest_url):
         return
 
     service_counts = defaultdict(lambda: 0)
-    log_lines = rdd.collect()
 
-    print "processing", len(log_lines), "entries"
+    print "processing", count, "entries"
+
+    log_lines = rdd.collect()
 
     norm_log_lines = map(repack, log_lines)
 
