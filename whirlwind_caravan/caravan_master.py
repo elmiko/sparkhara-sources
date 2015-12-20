@@ -10,11 +10,13 @@ from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
 import requests
 
+from operator import add
 
-def signal_rest_server(rawdata, rest_url):
-    data = {'id': rawdata['_id'],
-            'count': rawdata['count'],
-            'service-counts': rawdata['service-counts'],
+
+def signal_rest_server(id, count, service_counts, rest_url):
+    data = {'id': id,
+            'count': count,
+            'service-counts': service_counts,
             }
     try:
         requests.post(rest_url, json=data)
@@ -22,48 +24,47 @@ def signal_rest_server(rawdata, rest_url):
         print('handled: {}'.format(ex))
 
 
-def store_packets(rawdata, mongo_url):
-    data = {'_id': rawdata['_id'],
-            'processed-at': rawdata['processed-at'],
-            'count': rawdata['count'],
-            'log-ids': rawdata['log-ids'],
+def store_packets(id, count, log_ids, log_packets, mongo_url):
+    data = {'_id': id,
+            'processed-at': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            'count': count,
+            'log-ids': log_ids,
             }
     db = pymongo.MongoClient(mongo_url).sparkhara
     db.count_packets.insert_one(data)
-    data = rawdata['log-packets']
-    db.log_packets.insert_many(data, ordered=False)
+    db.log_packets.insert_many(log_packets, ordered=False)
 
 
-def normalize_log_lines(log_lines, service_name=None):
-    norm_log_lines = []
-    service_counts = {}
-    for line in log_lines:
-        for k, v in json.loads(line).items():
-            repack = {'_id': uuid.uuid4().hex,
-                      'service': k,
-                      'log': v,
-                      }
-            norm_log_lines.append(repack)
-            service_counts[k] = service_counts.get(k, 0) + 1
-    data = {'_id': uuid.uuid4().hex,
-            'count': len(norm_log_lines),
-            'log-ids': [l['_id'] for l in norm_log_lines],
-            'log-packets': norm_log_lines,
-            'service-counts': service_counts,
-            }
-    return data
+def repack(line):
+    (service, log) = json.loads(line).items()[0]
+
+    return  {'_id': uuid.uuid4().hex,
+             'service': service,
+             'log': log}
 
 
 def process_generic(rdd, mongo_url, rest_url):
-    log_lines = rdd.collect()
-    print(len(log_lines), "processed")
-    if len(log_lines) > 0:
-        data = normalize_log_lines(log_lines)
-        data['processed-at'] = datetime.datetime.now().strftime(
-            '%Y-%m-%d %H:%M:%S.%f')[:-3]
-        store_packets(data, mongo_url)
-        signal_rest_server(data, rest_url)
+    count = rdd.count()
+    if count is 0:
+        return
 
+    print "processing", count, "entries"
+
+    normalized_rdd = rdd.map(repack)
+
+    id = uuid.uuid4().hex
+
+    store_packets(id,
+                  count,
+                  normalized_rdd.map(lambda e: e['_id']).collect(),
+                  normalized_rdd.collect(),
+                  mongo_url)
+
+    signal_rest_server(id,
+                       count,
+                       dict(normalized_rdd.map(
+                           lambda e: (e['service'], 1)).reduceByKey(add).collect()),
+                       rest_url)
 
 def main():
     parser = argparse.ArgumentParser(
