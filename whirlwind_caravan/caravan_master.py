@@ -52,13 +52,11 @@ def process_generic(rdd, mongo_url, rest_url):
 
     normalized_rdd = rdd.map(repack)
 
-    ids = normalized_rdd.map(lambda e: e['_id']).collect()
-
     id = uuid.uuid4().hex
 
     store_packets(id,
                   count,
-                  ids,
+                  normalized_rdd.map(lambda e: e['_id']).collect(),
                   normalized_rdd.collect(),
                   mongo_url)
 
