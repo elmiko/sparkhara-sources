@@ -43,13 +43,11 @@ def repack(line):
 
 
 def normalize_log_lines(log_lines, service_name=None):
-    norm_log_lines = []
     service_counts = {}
 
-    lines = map(repack, log_lines)
-    for line in lines:
+    norm_log_lines = map(repack, log_lines)
+    for line in norm_log_lines:
         service = line['service']
-        norm_log_lines.append(line)
         service_counts[service] = service_counts.get(service, 0) + 1
     data = {'_id': uuid.uuid4().hex,
             'count': len(norm_log_lines),
