@@ -24,11 +24,11 @@ def signal_rest_server(id, count, service_counts, rest_url):
         print('handled: {}'.format(ex))
 
 
-def store_packets(rawdata, mongo_url):
-    data = {'_id': rawdata['_id'],
-            'processed-at': rawdata['processed-at'],
-            'count': rawdata['count'],
-            'log-ids': rawdata['log-ids'],
+def store_packets(id, processed_at, count, log_ids, mongo_url):
+    data = {'_id': id,
+            'processed-at': processed_at,
+            'count': count,
+            'log-ids': log_ids,
             }
     db = pymongo.MongoClient(mongo_url).sparkhara
     db.count_packets.insert_one(data)
@@ -66,7 +66,11 @@ def process_generic(rdd, mongo_url, rest_url):
         data = normalize_log_lines(log_lines)
         data['processed-at'] = datetime.datetime.now().strftime(
             '%Y-%m-%d %H:%M:%S.%f')[:-3]
-        store_packets(data, mongo_url)
+        store_packets(data['_id'],
+                      data['processed-at'],
+                      data['count'],
+                      data['log-ids'],
+                      mongo_url)
         signal_rest_server(data['_id'],
                            data['count'],
                            data['service-counts'],
