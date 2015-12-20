@@ -44,24 +44,32 @@ def repack(line):
 
 
 def process_generic(rdd, mongo_url, rest_url):
+    if rdd.count() is 0:
+        return
+
+    service_counts = defaultdict(lambda: 0)
     log_lines = rdd.collect()
-    print(len(log_lines), "processed")
-    if len(log_lines) > 0:
-        service_counts = defaultdict(lambda: 0)
-        norm_log_lines = map(repack, log_lines)
-        for line in norm_log_lines:
-            service_counts[line['service']] += 1
-        id = uuid.uuid4().hex
-        count = len(norm_log_lines)
-        store_packets(id,
-                      count,
-                      [l['_id'] for l in norm_log_lines],
-                      norm_log_lines,
-                      mongo_url)
-        signal_rest_server(id,
-                           count,
-                           service_counts,
-                           rest_url)
+
+    print "processing", len(log_lines), "entries"
+
+    norm_log_lines = map(repack, log_lines)
+
+    for line in norm_log_lines:
+        service_counts[line['service']] += 1
+
+    id = uuid.uuid4().hex
+    count = len(norm_log_lines)
+
+    store_packets(id,
+                  count,
+                  [l['_id'] for l in norm_log_lines],
+                  norm_log_lines,
+                  mongo_url)
+
+    signal_rest_server(id,
+                       count,
+                       service_counts,
+                       rest_url)
 
 def main():
     parser = argparse.ArgumentParser(
