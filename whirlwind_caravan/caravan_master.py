@@ -24,9 +24,9 @@ def signal_rest_server(id, count, service_counts, rest_url):
         print('handled: {}'.format(ex))
 
 
-def store_packets(id, processed_at, count, log_ids, mongo_url):
+def store_packets(id, count, log_ids, mongo_url):
     data = {'_id': id,
-            'processed-at': processed_at,
+            'processed-at': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
             'count': count,
             'log-ids': log_ids,
             }
@@ -58,10 +58,7 @@ def process_generic(rdd, mongo_url, rest_url):
                 'log-packets': norm_log_lines,
                 'service-counts': service_counts
         }
-        data['processed-at'] = datetime.datetime.now().strftime(
-            '%Y-%m-%d %H:%M:%S.%f')[:-3]
         store_packets(data['_id'],
-                      data['processed-at'],
                       data['count'],
                       data['log-ids'],
                       mongo_url)
