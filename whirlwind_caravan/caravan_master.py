@@ -52,17 +52,17 @@ def process_generic(rdd, mongo_url, rest_url):
         norm_log_lines = map(repack, log_lines)
         for line in norm_log_lines:
             service_counts[line['service']] += 1
-        data = {'_id': uuid.uuid4().hex,
-                'count': len(norm_log_lines),
+        id = uuid.uuid4().hex
+        data = {'count': len(norm_log_lines),
                 'log-ids': [l['_id'] for l in norm_log_lines],
                 'log-packets': norm_log_lines,
                 'service-counts': service_counts
         }
-        store_packets(data['_id'],
+        store_packets(id,
                       data['count'],
                       data['log-ids'],
                       mongo_url)
-        signal_rest_server(data['_id'],
+        signal_rest_server(id,
                            data['count'],
                            data['service-counts'],
                            rest_url)
