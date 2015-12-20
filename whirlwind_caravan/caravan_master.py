@@ -53,8 +53,6 @@ def process_generic(rdd, mongo_url, rest_url):
             service_counts[line['service']] += 1
         id = uuid.uuid4().hex
         count = len(norm_log_lines)
-        data = {'service-counts': service_counts
-        }
         store_packets(id,
                       count,
                       [l['_id'] for l in norm_log_lines],
@@ -62,7 +60,7 @@ def process_generic(rdd, mongo_url, rest_url):
                       mongo_url)
         signal_rest_server(id,
                            count,
-                           data['service-counts'],
+                           service_counts,
                            rest_url)
 
 def main():
