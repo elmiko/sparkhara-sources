@@ -25,6 +25,9 @@ def signal_rest_server(id, count, service_counts, rest_url):
 
 
 def store_packets(id, count, rdd, mongo_url):
+    # TODO: consider changing this to:
+    # 0. rdd.foreachPartition(lambda p: code to do log_packets.insert_many)
+    # 1. code to insert log-ids document
     log_packets = normalized_rdd.collect()
     data = {'_id': id,
             'processed-at': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
