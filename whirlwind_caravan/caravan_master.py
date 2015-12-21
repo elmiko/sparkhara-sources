@@ -32,17 +32,16 @@ def store_packets(id, count, normalized_rdd, mongo_url):
     data = {'_id': id,
             'processed-at': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
             'count': count,
-            'log-ids': normalized_rdd.map(lambda e: e['_id']).collect(),
             }
     db = pymongo.MongoClient(mongo_url).sparkhara
     db.count_packets.insert_one(data)
     db.log_packets.insert_many(log_packets, ordered=False)
 
 
-def repack(line):
+def repack(line, count_packet_id):
     (service, log) = json.loads(line).items()[0]
 
-    return  {'_id': uuid.uuid4().hex,
+    return  {'count-packet': count_packet_id,
              'service': service,
              'log': log}
 
@@ -54,13 +53,13 @@ def process_generic(rdd, mongo_url, rest_url):
 
     print "processing", count, "entries"
 
-    normalized_rdd = rdd.map(repack).cache()
+    count_packet_id = uuid.uuid4().hex
 
-    id = uuid.uuid4().hex
+    normalized_rdd = rdd.map(lambda e: repack(e, count_packet_id)).cache()
 
-    store_packets(id, count, normalized_rdd, mongo_url)
+    store_packets(count_packet_id, count, normalized_rdd, mongo_url)
 
-    signal_rest_server(id,
+    signal_rest_server(count_packet_id,
                        count,
                        dict(normalized_rdd.map(
                            lambda e: (e['service'], 1)).reduceByKey(add).collect()),
@@ -83,8 +82,8 @@ def main():
     parser.add_argument('--master',
                         help='the master url for the spark cluster')
     parser.add_argument('--socket',
-                        help='the socket to attach for streaming text data '
-                        '(default: caravan-pathfinder)',
+                        help='the socket ip address to attach for streaming '
+                        'text data (default: caravan-pathfinder)',
                         default='caravan-pathfinder')
     args = parser.parse_args()
     mongo_url = args.mongo

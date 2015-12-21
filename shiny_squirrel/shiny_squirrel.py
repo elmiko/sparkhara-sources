@@ -161,12 +161,8 @@ class SortedLogsView(views.MethodView):
         logs = []
         db = pymongo.MongoClient(_mongourl).sparkhara
         for i in ids:
-            packet = db.count_packets.find_one(i)
-            if packet:
-                for li in packet.get('log-ids', []):
-                    log = db.log_packets.find_one(li)
-                    if log:
-                        logs.append(log['log'])
+            for log in db.log_packets.find({'count-packet': i}):
+                logs.append(log['log'])
 
         def log_sort(a, b):
             print(a)
