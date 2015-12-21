@@ -24,11 +24,15 @@ def signal_rest_server(id, count, service_counts, rest_url):
         print('handled: {}'.format(ex))
 
 
-def store_packets(id, count, log_ids, log_packets, mongo_url):
+def store_packets(id, count, rdd, mongo_url):
+    # TODO: consider changing this to:
+    # 0. rdd.foreachPartition(lambda p: code to do log_packets.insert_many)
+    # 1. code to insert log-ids document
+    log_packets = normalized_rdd.collect()
     data = {'_id': id,
             'processed-at': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
             'count': count,
-            'log-ids': log_ids,
+            'log-ids': normalized_rdd.map(lambda e: e['_id']).collect(),
             }
     db = pymongo.MongoClient(mongo_url).sparkhara
     db.count_packets.insert_one(data)
@@ -54,11 +58,7 @@ def process_generic(rdd, mongo_url, rest_url):
 
     id = uuid.uuid4().hex
 
-    store_packets(id,
-                  count,
-                  normalized_rdd.map(lambda e: e['_id']).collect(),
-                  normalized_rdd.collect(),
-                  mongo_url)
+    store_packets(id, count, normalized_rdd, mongo_url)
 
     signal_rest_server(id,
                        count,
