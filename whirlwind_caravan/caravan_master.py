@@ -24,7 +24,7 @@ def signal_rest_server(id, count, service_counts, rest_url):
         print('handled: {}'.format(ex))
 
 
-def store_packets(id, count, rdd, mongo_url):
+def store_packets(id, count, normalized_rdd, mongo_url):
     # TODO: consider changing this to:
     # 0. rdd.foreachPartition(lambda p: code to do log_packets.insert_many)
     # 1. code to insert log-ids document
@@ -54,7 +54,7 @@ def process_generic(rdd, mongo_url, rest_url):
 
     print "processing", count, "entries"
 
-    normalized_rdd = rdd.map(repack)
+    normalized_rdd = rdd.map(repack).cache()
 
     id = uuid.uuid4().hex
 

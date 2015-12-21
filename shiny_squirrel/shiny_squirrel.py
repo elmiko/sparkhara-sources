@@ -163,7 +163,7 @@ class SortedLogsView(views.MethodView):
         for i in ids:
             packet = db.count_packets.find_one(i)
             if packet:
-                for li in packet.get('log-ids'):
+                for li in packet.get('log-ids', []):
                     log = db.log_packets.find_one(li)
                     if log:
                         logs.append(log['log'])
