@@ -7,7 +7,7 @@ var x = d3.scale.linear()
     .range([0, width]);
 
 var x_axis_scale = d3.scale.linear()
-    .domain([0, 180])
+    .domain([0, 60])
     .range([0, width]);
 
 var y = d3.scale.linear()
@@ -74,7 +74,9 @@ function get_count_for_service(service) {
         p.count = +item.services[service];
       }
     }
-    data.push(p)
+    if (p.count > 0) {
+      data.push(p);
+    }
   });
 
   return data;
@@ -179,21 +181,22 @@ setInterval(function() {
   d3.json("/count-packets", function(error, data) {
       if (error) throw error;
 
-      var p = Object();
-      p.total_count = data["count-packets"]["since-last-get"].count;
-      p.packet_ids = data["count-packets"]["since-last-get"].ids;
-      p.errors = data["count-packets"]["since-last-get"].errors;
-      p.services = data["count-packets"]["since-last-get"]["service-counts"];
-      Object.keys(p.services).forEach(function (item) {
-        if (service_list.indexOf(item) === -1) {
-          service_list.push(item);
-        }
+      var new_count_list = [];
+      data["count-packets"]["history"].forEach(function (item) {
+        var p = Object();
+        p.total_count = item.count;
+        p.packet_ids = item.ids;
+        p.errors = item.errors;
+        p.services = item["service-counts"];
+        Object.keys(p.services).forEach(function (item) {
+          if (service_list.indexOf(item) === -1) {
+            service_list.push(item);
+          }
+        });
+        new_count_list.unshift(p);
       });
 
-      count_list.unshift(p);
-      if (count_list.length >= 60) {
-        count_list.pop();
-      }
+      count_list = new_count_list
 
       update();
       update_line_and_circles();

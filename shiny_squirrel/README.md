@@ -34,12 +34,20 @@ a web page with the graph of counts
       "count-packets": {
         "last-received": {
           "count": 0,
-          "id": null
+          "id": null,
+          "service-counts": {
+              "<service name>": 0
+          }
         },
-        "since-last-get": {
-          "count": 0,
-          "ids": []
-        }
+        "history": [
+          {
+            "count": 0,
+            "ids": [],
+            "service-counts": {
+                "<service name>": 0
+            }
+          }
+        ]
       }
     }
 

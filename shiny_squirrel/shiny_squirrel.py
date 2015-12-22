@@ -1,6 +1,9 @@
 import argparse
+import collections
 import copy
 import datetime
+import threading
+import time
 
 import flask as f
 from flask import views
@@ -78,6 +81,8 @@ class LogTotals(Singleton):
 class CountPackets(Singleton):
     @Singleton.check_initialized
     def __init__(self):
+        self.history = collections.deque(maxlen=60)
+        self.history_lock = threading.Lock()
         self.flush()
         self.last_packet = {
             'id': None,
@@ -86,18 +91,17 @@ class CountPackets(Singleton):
             }
 
     def flush(self):
-        self.since_last_get = {
+        self.since_last_update = {
             'ids': [],
             'count': 0,
             'service-counts': {},
-            'errors': False,
             }
 
     def to_dict(self):
         return {
             'count-packets': {
                 'last-received': copy.deepcopy(self.last_packet),
-                'since-last-get': copy.deepcopy(self.since_last_get)
+                'history': copy.deepcopy([i for i in self.history])
                 }
             }
 
@@ -121,13 +125,31 @@ class CountPackets(Singleton):
         self.last_packet['service-counts'] = copy.deepcopy(
             new_packet.get('service-counts', {}))
 
-        self.since_last_get['ids'].append(self.last_packet['id'])
-        self.since_last_get['count'] += self.last_packet['count']
+        self.since_last_update['ids'].append(self.last_packet['id'])
+        self.since_last_update['count'] += self.last_packet['count']
         for service, count in self.last_packet['service-counts'].items():
-            self.since_last_get['service-counts'][service] = (
-                self.since_last_get['service-counts'].get(service, 0)
+            self.since_last_update['service-counts'][service] = (
+                self.since_last_update['service-counts'].get(service, 0)
                 + int(count))
 
+    def update_history(self):
+        self.history_lock.acquire()
+        self.history.append(copy.deepcopy(self.since_last_update))
+        self.flush()
+        self.history_lock.release()
+
+
+class CountPacketsTimer(threading.Thread):
+    def __init__(self, counter, seconds, *args, **kwargs):
+        super(CountPacketsTimer, self).__init__(*args, **kwargs)
+        self.daemon = True
+        self.counter = counter
+        self.seconds = seconds
+
+    def run(self):
+        while True:
+            self.counter.update_history()
+            time.sleep(self.seconds)
 
 
 class IndexView(views.MethodView):
@@ -139,7 +161,6 @@ class CountPacketsView(views.MethodView):
     def get(self):
         status = 200
         ret = f.jsonify(CountPackets().to_dict())
-        CountPackets().flush()
         return ret, status
 
     def post(self):
@@ -201,4 +222,6 @@ if __name__ == '__main__':
                      view_func=CountPacketsView.as_view('countpackets'))
     app.add_url_rule('/sorted-logs',
                      view_func=SortedLogsView.as_view('sortedlogs'))
+
+    CountPacketsTimer(CountPackets(), 1).start()
     app.run(host='0.0.0.0', port=9050)
