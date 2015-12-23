@@ -156,6 +156,27 @@ function update() {
 
 function update_line_and_circles() {
   var services = service_list;
+  var legend = d3.select("#service-countline").selectAll(".legend").data(services);
+
+  legend.enter().append("g")
+          .attr("class", "legend")
+          .attr("transform", function (d, i) {return "translate(0," + i * 20 + ")"; });
+
+  legend.exit().remove();
+
+  legend.append("rect")
+    .attr("x", width - 18)
+    .attr("width", 18)
+    .attr("height", 18)
+    .style("fill", function(d, i) {return color_list[i % color_list.length]; });
+
+  legend.append("text")
+    .attr("x", width - 24)
+    .attr("y", 9)
+    .attr("dy", ".35em")
+    .style("text-anchor", "end")
+    .text(function(d) {return d; });
+
   d3.select("#service-countline").selectAll("path").remove();
   services.forEach(function (item, idx) {
     var data = get_count_for_service(item);
