@@ -40,6 +40,8 @@ var service_graph = d3.select("#service-graph").append("svg")
 
 var count_list = [];
 var service_list = [];
+var color_list = ['teal', 'orangered', 'mediumseagreen',
+                  'mediumturquoise', 'gold', 'limegreen'];
 
 function circle_transform(item) {
   var scaled_pos = x(item.pos);
@@ -154,14 +156,13 @@ function update() {
 
 function update_line_and_circles() {
   var services = service_list;
-  var colors = ['teal', 'orangered', 'gold'];
   d3.select("#service-countline").selectAll("path").remove();
   services.forEach(function (item, idx) {
     var data = get_count_for_service(item);
     d3.select("#service-countline").append("path")
           .datum(data)
           .attr("class", "line")
-          .style("stroke", colors[idx])
+          .style("stroke", color_list[idx % color_list.length])
           .attr("d", line);
     data.forEach(function (item) {
       d3.select("#service-countline").append("path")
@@ -169,7 +170,7 @@ function update_line_and_circles() {
             .attr("transform", circle_transform(item))
             .attr("class", "circle")
             .attr("d", d3.svg.symbol().size(40))
-            .style("fill", colors[idx]);
+            .style("fill", color_list[idx % color_list.length]);
     });
   });
 }
